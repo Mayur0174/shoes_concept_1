@@ -1,0 +1,84 @@
+name: build-cad
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "soletta/**"
+      - "build.py"
+      - "params.json"
+      - "requirements.txt"
+      - ".github/workflows/build.yml"
+  workflow_dispatch:
+    inputs:
+      quality:
+        description: "draft or full"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-cad
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: System packages for headless rendering and fonts
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q xvfb libgl1 libegl1 libxrender1 fonts-dejavu-core
+
+      - name: Python packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip freeze | tee pip-freeze.txt
+
+      - name: Build CAD
+        env:
+          SOLETTA_QUALITY: ${{ github.event.inputs.quality }}
+        run: |
+          set -o pipefail
+          mkdir -p reports
+          xvfb-run -a -s "-screen 0 1920x1080x24" python build.py 2>&1 | tee reports/build_log.txt
+
+      - name: Publish release with model files
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Soletta CAD build ${{ github.run_number }}
+          body_path: reports/report.md
+          files: out/release/*
+
+      - name: Keep model files as workflow artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: soletta-cad-${{ github.run_number }}
+          path: out/release
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Commit renders and report back to the repo
+        if: always()
+        run: |
+          cp pip-freeze.txt reports/ 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A reports renders 2>/dev/null || true
+          git commit -m "CI build ${{ github.run_number }}: renders and report [skip ci]" || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main

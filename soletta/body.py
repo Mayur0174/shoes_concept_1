@@ -1,0 +1,441 @@
+"""Main shoe body: midsole with through-chambers, upper, wraps, tongue,
+collar, heel counter, dial pods and brackets, tension cables, guides,
+anchors and eyelets, all as one SDF program."""
+import numpy as np
+
+from .sdf import (Scene, Feature, CapsuleChain, Frame, smin, smax, round_intersect,
+                  box, cylinder, torus, rbox2d, ray_hit, normals, project, unit)
+
+
+class BodyModel:
+    pass
+
+
+# ----------------------------------------------------------------------------
+# Core analytic fields
+# ----------------------------------------------------------------------------
+
+def upper_field(prof, X, Y, Z, n_lo=3.5, n_hi=2.4):
+    """Outer upper: superelliptic sections swept along x, normalised by the
+    gradient so the value approximates Euclidean distance near the surface."""
+
+    def rho_parts(Xs):
+        Wu = np.maximum(prof.Wu(Xs), 1e-3)
+        zb = prof.zb(Xs)
+        zt = prof.Zt(Xs)
+        zc = zb + 0.42 * (zt - zb)
+        hlo = np.maximum(zc - zb, 1e-3)
+        hhi = np.maximum(zt - zc, 1e-3)
+        u = np.abs(Y - prof.cy(Xs)) / Wu
+        dz = Z - zc
+        upper_half = dz > 0
+        h = np.where(upper_half, hhi, hlo)
+        v = np.abs(dz) / h
+        n = np.where(upper_half, n_hi, n_lo)
+        un = u ** n
+        vn = v ** n
+        rho = np.maximum((un + vn) ** (1.0 / n), 1e-6)
+        return rho, u, v, n, Wu, h
+
+    rho, u, v, n, Wu, h = rho_parts(X)
+    r1n = rho ** (1.0 - n)
+    gy = u ** (n - 1.0) * r1n / Wu
+    gz = v ** (n - 1.0) * r1n / h
+    dx = 0.5
+    rp = rho_parts(X + dx)[0]
+    rm = rho_parts(X - dx)[0]
+    gx = (rp - rm) / (2 * dx)
+    g = np.sqrt(gx * gx + gy * gy + gz * gz)
+    return (rho - 1.0) / np.maximum(g, 1e-3)
+
+
+def midsole_field(prof, X, Y, Z):
+    d2 = prof.sole2d(X, Y)
+    top = Z - prof.ztop(X)
+    bot = prof.zmid_bottom(X) - Z
+    a = round_intersect(d2, top, 6.0 * prof.sz)
+    return round_intersect(a, bot, 1.0)
+
+
+def panel_region(prof, X, Y):
+    q = np.abs(Y - prof.cy(X)) - prof.phw(X)
+    return round_intersect(q, 146.0 * prof.sx - X, 3.0)
+
+
+def quarter_region(prof, X, Z):
+    sx = prof.sx
+    zl = prof.zline(X) + 7.0 * prof.sz
+    zh = prof.zquarter(X)
+    a = np.maximum(zl - Z, Z - zh)
+    b = np.maximum(58.0 * sx - X, X - 150.0 * sx)
+    return round_intersect(a, b, 4.0)
+
+
+def core_parts(prof, X, Y, Z):
+    fu = upper_field(prof, X, Y, Z)
+    ms = midsole_field(prof, X, Y, Z)
+    tw = prof.p["upper"]["wrap_thickness"]
+    wrap = round_intersect(fu - tw, Z - prof.zline(X), 1.5)
+    panel = round_intersect(fu - prof.p["upper"]["lace_panel_thickness"], panel_region(prof, X, Y), 1.0)
+    quarter = round_intersect(fu - prof.p["upper"]["quarter_panel_thickness"], quarter_region(prof, X, Z), 1.0)
+    return dict(upper=fu, midsole=ms, wrap=wrap, panel=panel, quarter=quarter)
+
+
+def core_field(prof, X, Y, Z):
+    c = core_parts(prof, X, Y, Z)
+    d = smin(c["midsole"], c["wrap"], 6.0)
+    d = smin(d, c["upper"], 1.0)
+    d = np.minimum(d, c["panel"])
+    d = np.minimum(d, c["quarter"])
+    return d
+
+
+def well_field(prof, X, Y, Z):
+    """Foot opening: vertical-walled well above the footbed behind the throat."""
+    x_throat = prof.p["upper"]["throat_x"] * prof.sx
+    d2 = prof.upper2d(X, Y) + prof.twall(X)
+    d2 = smax(d2, X - x_throat, 8.0)
+    return smax(d2, prof.ztop(X) - Z, 2.0)
+
+
+def collar_cut_field(prof, X, Y, Z):
+    return prof.Zc(X) - Z + 0.0 * Y
+
+
+# ----------------------------------------------------------------------------
+# Local features
+# ----------------------------------------------------------------------------
+
+def tongue_feature(prof):
+    sx, sz = prof.sx, prof.sz
+    ang = np.radians(65.0)
+    axis = np.array([-np.cos(ang), 0.0, np.sin(ang)])
+    nrm = np.array([np.sin(ang), 0.0, np.cos(ang)])
+    c = np.array([148.0 * sx, float(prof.cy(148.0 * sx)), 86.0 * sz])
+    fr = Frame(c, nrm, ex_hint=axis)
+    half_len, half_w, half_t = 22.0 * sz, 22.0 * prof.sy, 3.6
+
+    def fn(X, Y, Z):
+        lx, ly, lz = fr.local(X, Y, Z)
+        lz = lz + 0.010 * ly * ly          # edges curl back over the instep
+        return box(lx, ly, lz, half_len, half_w, half_t, 2.5)
+
+    return Feature(fn, fr.bbox(max(half_len, half_w) + 8), "tongue"), fr
+
+
+def pull_tab_feature(prof):
+    p = prof.p["heel"]
+    tilt = np.radians(8.0)
+    top = prof.H
+    hz = p["pull_tab_height"] / 2
+    c = np.array([-1.2 * prof.sx, float(prof.cy(0.0)), top - hz])
+    up = np.array([-np.sin(tilt), 0.0, np.cos(tilt)])
+    fr = Frame(c, np.array([np.cos(tilt), 0.0, np.sin(tilt)]), ex_hint=up)
+    t = p["pull_tab_thickness"] / 2
+    w = p["pull_tab_width"] / 2
+
+    def fn(X, Y, Z):
+        lx, ly, lz = fr.local(X, Y, Z)       # lx: up, ly: across, lz: through
+        tab = box(lx, ly, lz, hz, w, t, 1.5)
+        hole = box(lx - (hz - 6.5), ly, lz, 3.0, w - 5.0, t + 3, 1.0)
+        return smax(tab, -hole, 0.8)
+
+    return Feature(fn, fr.bbox(hz + w + 4), "pull_tab")
+
+
+def tunnel_feature(prof, spec):
+    """Through-chamber in the midsole: lofted superelliptic cross-section that
+    pinches at the centre line and flares at both openings."""
+    sx, sz = prof.sx, prof.sz
+    xc, zc = spec["x"] * sx, spec["z"] * sz
+    a, b = spec["half_length"] * sx, spec["half_height"] * sz
+    tilt = np.radians(spec.get("tilt_deg", 0.0))
+    ct, st = np.cos(tilt), np.sin(tilt)
+    n = 2.6
+
+    def fn(X, Y, Z):
+        dx = X - xc
+        dz = Z - zc
+        lx = dx * ct + dz * st
+        lz = -dx * st + dz * ct
+        yy = np.abs(Y - prof.cy(X))
+        s = 0.78 + 0.22 * np.clip((yy - 8.0) / 30.0, 0.0, 1.0) ** 2   # loft: pinch -> flare
+        s = s + 0.18 * np.clip((yy - 30.0) / 18.0, 0.0, 1.0) ** 2
+        u = np.abs(lx) / (a * s)
+        v = np.abs(lz) / (b * s)
+        rho = np.maximum((u ** n + v ** n) ** (1.0 / n), 1e-6)
+        return (rho - 1.0) * np.minimum(a, b) * s
+
+    big = 1.6
+    lo = (xc - a * big - 2, -200.0, zc - b * big - 2)
+    hi = (xc + a * big + 2, 200.0, zc + b * big + 2)
+    return Feature(fn, (lo, hi), "tunnel")
+
+
+def frame_feature(fr, fn_local, radius, name):
+    def fn(X, Y, Z):
+        return fn_local(*fr.local(X, Y, Z))
+    return Feature(fn, fr.bbox(radius), name)
+
+
+# ----------------------------------------------------------------------------
+# Surface projection helpers
+# ----------------------------------------------------------------------------
+
+def project_side(scene, upto, prof, xz, side):
+    """Hit the shoe from the side (+y side=+1, -y side=-1) at given (x, z)."""
+    xz = np.atleast_2d(xz)
+    cy = prof.cy(xz[:, 0])
+    O = np.c_[xz[:, 0], cy + side * 150.0, xz[:, 1]]
+    D = np.tile([0.0, -side, 0.0], (len(xz), 1))
+    P, hit, _ = ray_hit(scene, O, D, 150.0, 0.25, upto)
+    N = normals(scene, P, upto)
+    return P, N, hit
+
+
+def project_top(scene, upto, xy):
+    xy = np.atleast_2d(xy)
+    O = np.c_[xy, np.full(len(xy), 200.0)]
+    D = np.tile([0.0, 0.0, -1.0], (len(xy), 1))
+    P, hit, _ = ray_hit(scene, O, D, 200.0, 0.25, upto)
+    N = normals(scene, P, upto)
+    return P, N, hit
+
+
+# ----------------------------------------------------------------------------
+# Build
+# ----------------------------------------------------------------------------
+
+def build_body(prof, log=print):
+    p = prof.p
+    sx, sz = prof.sx, prof.sz
+    m = BodyModel()
+    sc = Scene("body")
+    m.scene = sc
+    m.prof = prof
+
+    sc.add("base", Feature(lambda X, Y, Z: core_field(prof, X, Y, Z), None, "core"))
+    for spec in p["midsole"]["chambers"]:
+        sc.add("smooth_subtract", tunnel_feature(prof, spec), p["midsole"]["chamber_fillet"])
+    sc.add("smooth_subtract", Feature(lambda X, Y, Z: well_field(prof, X, Y, Z), None, "well"), 2.0)
+    sc.add("smooth_subtract", Feature(lambda X, Y, Z: collar_cut_field(prof, X, Y, Z), None, "collar_cut"), 2.5)
+    tongue, m.tongue_frame = tongue_feature(prof)
+    sc.add("smooth_union", tongue, 3.0)
+    sc.add("smooth_union", pull_tab_feature(prof), 1.5)
+    m.mark_base = sc.mark()
+    log("body: base program ready, placing dials")
+
+    # ---- dials -------------------------------------------------------------
+    dp = p["dials"]
+    R = dp["diameter"] / 2
+    m.dials = []
+    for side in (+1, -1):
+        for i, (x, z) in enumerate(dp["positions_xz"]):
+            x, z = x * sx, z * sz
+            P, N, hit = project_side(sc, m.mark_base, prof, [[x, z]], side)
+            if not hit[0]:
+                raise RuntimeError(f"dial ray missed at x={x} z={z} side={side}")
+            n = N[0].copy()
+            n[0] *= 0.6
+            n[2] *= 0.5
+            fr = Frame(P[0], n, ex_hint=(1.0, 0.0, 0.0))
+            # seat height: highest body point under the dial footprint (+ margin)
+            pts = [(0.0, 0.0)]
+            for r in (6.0, 11.0, 15.0, R + 2.5):
+                for a in np.linspace(0, 2 * np.pi, 24, endpoint=False):
+                    pts.append((r * np.cos(a), r * np.sin(a)))
+            pts = np.array(pts)
+            O = np.array([fr.world(lx, ly, 40.0) for lx, ly in pts])
+            D = np.tile(-fr.ez, (len(O), 1))
+            _, h_ok, t = ray_hit(sc, O, D, 80.0, 0.25, m.mark_base)
+            heights = 40.0 - t[h_ok]
+            t_pt = max(dp["pod_height"], float(heights.max()) + 2.0) if h_ok.any() else dp["pod_height"]
+            name = ("L" if side > 0 else "R") + str(i + 1)
+            m.dials.append(dict(name=name, side=side, index=i, frame=fr, seat=t_pt,
+                                origin=fr.world(0, 0, t_pt + dp["seat_gap"])))
+
+    # pods (organic mounts) + seat cut + bracket ring + ears + ports + peg
+    pod_r = R + 6.0
+    for d in m.dials:
+        fr, t_pt = d["frame"], d["seat"]
+        sc.add("smooth_union", frame_feature(
+            fr, lambda lx, ly, lz, t_pt=t_pt: cylinder(lx, ly, lz, pod_r, -9.0, t_pt, 2.2),
+            pod_r + 12, "pod"), 4.0)
+    for d in m.dials:
+        fr, t_pt = d["frame"], d["seat"]
+        sc.add("subtract", frame_feature(
+            fr, lambda lx, ly, lz, t_pt=t_pt: cylinder(lx, ly, lz, R + 0.9, t_pt, t_pt + 14.0, 0.0),
+            R + 16, "seat"))
+
+    m.mark_pods = sc.mark()
+    targets = p["cables"]["targets_xz"]
+    rc = p["cables"]["diameter"] / 2
+    for d in m.dials:
+        fr, t_pt = d["frame"], d["seat"]
+        tx, tz = targets[d["index"]]
+        tx, tz = tx * sx, tz * sz
+        T, TN, hit = project_side(sc, m.mark_pods, prof, [[tx, tz]], d["side"])
+        d["target"] = T[0]
+        d["target_normal"] = TN[0]
+        lx, ly, _ = fr.local(*T[0])
+        theta_t = np.arctan2(ly, lx)
+        d["port_angles"] = [theta_t + np.radians(a) for a in (-24.0, 24.0)]
+
+        def bracket(lx, ly, lz, t_pt=t_pt, theta_t=theta_t):
+            rad = np.sqrt(lx * lx + ly * ly)
+            ring = np.maximum(np.maximum(R + 0.9 - rad, rad - (R + 3.6)),
+                              np.maximum(t_pt - 0.5 - lz, lz - (t_pt + 1.6)))
+            out = ring
+            for ea in (theta_t + np.pi - np.radians(55), theta_t + np.pi + np.radians(55)):
+                ca, sa = np.cos(ea), np.sin(ea)
+                ex = lx * ca + ly * sa
+                ey = -lx * sa + ly * ca
+                ear = box(ex - (R + 5.0), ey, lz - (t_pt + 0.55), 4.0, 3.5, 1.05, 1.0)
+                screw = cylinder(ex - (R + 6.0), ey, lz, 1.8, t_pt + 1.0, t_pt + 2.2, 0.5)
+                out = np.minimum(out, np.minimum(ear, screw))
+            peg = cylinder(lx, ly, lz, dp["peg_diameter"] / 2, t_pt - 1.0,
+                           t_pt + dp["seat_gap"] + dp["peg_length"], 0.6)
+            out = np.minimum(out, peg)
+            for pa in (theta_t - np.radians(24), theta_t + np.radians(24)):
+                a = np.array([np.cos(pa) * (R + 2.5), np.sin(pa) * (R + 2.5), t_pt + 1.0])
+                b = np.array([np.cos(pa) * (R + 7.5), np.sin(pa) * (R + 7.5), t_pt + 1.0])
+                port = cylinder_seg(lx, ly, lz, a, b, rc + 0.8)
+                out = np.minimum(out, port)
+            return out
+
+        sc.add("smooth_union", frame_feature(fr, bracket, R + 16, "bracket"), 0.5)
+    m.mark_brackets = sc.mark()
+    log("body: dials, pods and brackets placed; routing cables")
+
+    # ---- cables ------------------------------------------------------------
+    m.cables = []
+    m.hardware = []
+    upto = m.mark_brackets
+    for d in m.dials:
+        fr, t_pt, side = d["frame"], d["seat"], d["side"]
+        T = d["target"]
+        strands = []
+        for pa in d["port_angles"]:
+            P0 = fr.world(np.cos(pa) * (R + 7.5), np.sin(pa) * (R + 7.5), t_pt + 1.0)
+            dist = np.hypot(T[0] - P0[0], T[2] - P0[2])
+            s = np.linspace(0.0, 1.0, max(6, int(dist / 2.0)))
+            xz = np.c_[P0[0] + (T[0] - P0[0]) * s, P0[2] + (T[2] - P0[2]) * s]
+            S, SN, ok = project_side(sc, upto, prof, xz, side)
+            lx, ly, _ = fr.local(S[:, 0], S[:, 1], S[:, 2])
+            keep = ok & (np.hypot(lx, ly) > R + 9.0)
+            S = S[keep]
+            if len(S) >= 3:
+                Sm = S.copy()
+                Sm[1:-1] = (S[:-2] + 2 * S[1:-1] + S[2:]) / 4.0
+                S = project(sc, Sm, offset=rc - 0.35, upto=upto, iters=3)
+            pts = np.vstack([P0, S, T + d["target_normal"] * (rc - 0.35)])
+            strands.append(pts)
+            sc.add("smooth_union", CapsuleChain(pts, rc, "cable"), 0.4)
+            m.cables.append(pts)
+        d["strands"] = strands
+    m.mark_cables = sc.mark()
+
+    # guides (molded sleeves) and anchor posts
+    for d in m.dials:
+        for pts in d["strands"]:
+            if len(pts) < 5:
+                continue
+            for frac in (0.45,):
+                i = int(len(pts) * frac)
+                c = pts[i]
+                tan = pts[i + 1] - pts[i - 1]
+                nn = normals(sc, c[None, :], m.mark_brackets)[0]
+                gfr = Frame(c, nn, ex_hint=tan)
+                sc.add("smooth_union", frame_feature(
+                    gfr, lambda lx, ly, lz: box(lx, ly, lz - 0.2, 3.2, 2.3, 1.45, 0.7), 8, "guide"), 0.5)
+                m.hardware.append(("guide", gfr))
+        T, TN = d["target"], d["target_normal"]
+        afr = Frame(T, TN)
+        sc.add("smooth_union", frame_feature(
+            afr, lambda lx, ly, lz: np.minimum(cylinder(lx, ly, lz, 4.6, -1.5, 1.4, 0.8),
+                                               cylinder(lx, ly, lz, 2.1, 0.0, 3.2, 0.7)), 10, "anchor"), 0.8)
+        m.hardware.append(("anchor", afr))
+    m.mark_guides = sc.mark()
+    log("body: cables, guides and anchors added; placing eyelets")
+
+    # ---- eyelets -------------------------------------------------------------
+    lp = p["laces"]
+    xs_e = np.linspace(lp["eyelet_x_start"], lp["eyelet_x_end"], lp["eyelets_per_side"]) * sx
+    off = prof.phw(xs_e) - lp["eyelet_edge_inset"]
+    cy = prof.cy(xs_e)
+    m.eyelets = {}
+    for side, key in ((+1, "L"), (-1, "R")):
+        xy = np.c_[xs_e, cy + side * off]
+        P, N, ok = project_top(sc, m.mark_guides, xy)
+        m.eyelets[key] = (P, N)
+    for key in ("L", "R"):
+        P, N = m.eyelets[key]
+        for c, nn in zip(P, N):
+            efr = Frame(c, nn)
+            sc.add("smooth_union", frame_feature(
+                efr, lambda lx, ly, lz: torus(lx, ly, lz - 0.4, lp["eyelet_ring_R"], lp["eyelet_ring_r"]),
+                10, "eyelet"), 0.5)
+    for key in ("L", "R"):
+        P, N = m.eyelets[key]
+        for c, nn in zip(P, N):
+            efr = Frame(c, nn)
+            sc.add("subtract", frame_feature(
+                efr, lambda lx, ly, lz: cylinder(lx, ly, lz, lp["eyelet_hole_r"], -5.0, 4.0, 0.0),
+                10, "eyelet_hole"))
+    m.mark_final = sc.mark()
+    log("body: program complete (%d ops)" % len(sc.ops))
+    return m
+
+
+def cylinder_seg(px, py, pz, a, b, r):
+    """Flat-capped cylinder between points a and b (local coords)."""
+    ab = b - a
+    L = np.linalg.norm(ab)
+    ax = ab / L
+    qx, qy, qz = px - a[0], py - a[1], pz - a[2]
+    t = qx * ax[0] + qy * ax[1] + qz * ax[2]
+    rx, ry, rz = qx - t * ax[0], qy - t * ax[1], qz - t * ax[2]
+    rad = np.sqrt(rx * rx + ry * ry + rz * rz)
+    dx = rad - r
+    dz = np.abs(t - L / 2) - L / 2
+    return np.minimum(np.maximum(dx, dz), 0.0) + np.sqrt(np.maximum(dx, 0) ** 2 + np.maximum(dz, 0) ** 2)
+
+
+# ----------------------------------------------------------------------------
+# Material labels for colouring renders / GLB
+# ----------------------------------------------------------------------------
+
+def body_labels(m, P):
+    """Return an int label per vertex:
+    0 camo upper, 1 midsole/wrap, 2 lace panel, 3 collar/lining, 4 tongue,
+    5 pod/bracket, 6 cable, 7 guide/anchor (black), 8 eyelet."""
+    prof = m.prof
+    X, Y, Z = P[:, 0], P[:, 1], P[:, 2]
+    c = core_parts(prof, X, Y, Z)
+    grey = smin(c["midsole"], c["wrap"], 6.0)
+    lab = np.zeros(len(P), np.int32)
+    eps = 0.35
+
+    lab[c["panel"] < eps] = 2
+    collar = (Z > prof.Zc(X) - 13.0) & (X < 146.0 * prof.sx)
+    lab[collar] = 3
+    well = well_field(prof, X, Y, Z)
+    lab[np.abs(well) < 0.6] = 3
+    tongue_f = [f for k, f, _ in m.scene.ops if f.name == "tongue"][0]
+    lab[tongue_f.points(P, 1.0) < 0.4] = 4
+    lab[(grey < eps) & (lab != 3)] = 1
+
+    groups = {"pod": 5, "bracket": 5, "cable": 6, "guide": 7, "anchor": 7, "eyelet": 8,
+              "pull_tab": 7}
+    for kind, f, k in m.scene.ops:
+        g = groups.get(f.name)
+        if g is None:
+            continue
+        lo, hi = f.bbox[0] - 2, f.bbox[1] + 2
+        mask = np.all((P >= lo) & (P <= hi), axis=1)
+        if not mask.any():
+            continue
+        idx = np.nonzero(mask)[0]
+        d = f.points(P[idx], 1.0)
+        lab[idx[d < 0.3]] = g
+    return lab
