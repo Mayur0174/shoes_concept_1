@@ -1,0 +1,44 @@
+[    0.0s] quality=draft resolution={'body': 0.8, 'outsole': 0.5, 'laces': 0.45}
+[    9.4s] profiles + planform maps ready
+[    9.4s] body: base program ready, placing dials
+[    9.8s] body: dials, pods and brackets placed; routing cables
+[   10.2s] body: cables, guides and anchors added; placing eyelets
+[   10.3s] body: program complete (80 ops)
+[   11.8s] laces: 17 lace chains
+[   14.0s] dials: 6 B-rep dials, volume each 5598 mm^3
+[   14.0s] body: evaluating SDF on 388x225x147 grid @ 0.8 mm
+[   14.0s]   body: slab 0/388
+[   14.6s]   body: slab 120/388
+[   15.3s]   body: slab 240/388
+[   15.8s]   body: slab 360/388
+[   15.8s] body: marching cubes
+[   17.2s] body: 544736 triangles, watertight=True
+[   17.2s] outsole: evaluating SDF on 609x316x59 grid @ 0.5 mm
+[   17.2s]   outsole: slab 0/609
+[   17.3s]   outsole: slab 120/609
+[   17.4s]   outsole: slab 240/609
+[   17.5s]   outsole: slab 360/609
+[   17.6s]   outsole: slab 480/609
+[   17.7s]   outsole: slab 600/609
+[   17.7s] outsole: marching cubes
+/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/trimesh/triangles.py:302: RuntimeWarning: invalid value encountered in divide
+  center_mass = integrated[1:4] / volume
+[   19.7s] outsole: 589180 triangles, watertight=True
+[   19.7s] laces: evaluating SDF on 237x200x142 grid @ 0.45 mm
+[   19.7s]   laces: slab 0/237
+[   19.8s]   laces: slab 120/237
+[   19.8s] laces: marching cubes
+[   20.3s] laces: 222258 triangles, watertight=True
+[   21.3s] insole logo debossed
+[   23.2s] validating meshes
+[   34.4s] exporting STL
+[   37.0s] colouring
+[   50.3s] rendered 9 views with pyvista
+[   54.3s] rendered 7 views with pyvista
+[   54.3s] STEP: building faceted solids for organic bodies
+[   62.0s] STEP: body faceted solid from 48770 facets in 3.9s
+[   77.7s] STEP: outsole faceted solid from 45256 facets in 3.7s
+[   89.8s] STEP: lace_assembly faceted solid from 17774 facets in 1.4s
+[  120.9s] STEP: assembly written
+[  142.0s] release packages: contact_sheet.png, report.md, soletta_STEP.zip, soletta_STL_components.zip, soletta_assembly.zip, soletta_printable.zip
+[  142.0s] done
