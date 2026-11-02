@@ -1,20 +1,20 @@
-# Soletta CAD build report (draft quality)
+# Soletta CAD build report (full quality)
 
-Elapsed: 120.9 s. Grid resolution (mm): {'body': 0.8, 'outsole': 0.5, 'laces': 0.45}
+Elapsed: 289.3 s. Grid resolution (mm): {'body': 0.35, 'outsole': 0.25, 'laces': 0.22}
 
 | Component | Triangles | Watertight | Winding OK | Bodies | Volume (cm3) | Extents (mm) | Overhang >45 deg |
 |---|---|---|---|---|---|---|---|
-| body | 546,248 | True | True | 1 | 1255.3 | 298.2 x 133.8 x 106.9 | 12.9% |
-| outsole | 589,180 | True | True | 1 | 106.5 | 291.9 x 112.8 x 22.8 | 26.3% |
-| laces | 222,258 | True | True | 1 | 19.7 | 96.3 x 80.1 x 55.0 | 15.4% |
+| body | 2,856,768 | True | True | 1 | 1255.4 | 298.2 x 133.8 x 106.9 | 12.9% |
+| outsole | 2,437,892 | True | True | 1 | 106.6 | 291.9 x 112.8 x 22.8 | 24.5% |
+| laces | 932,248 | True | True | 1 | 19.8 | 96.3 x 80.1 x 55.0 | 15.3% |
 | dial (each) | 18,948 | True | True | 1 | 5.6 | 32.0 x 32.0 x 8.0 | 16.6% |
-| printable shoe (body+outsole) | 674,650 | True | True | 1 | 1361.9 | 298.2 x 133.8 x 114.9 | 19.6% |
+| printable shoe (body+outsole) | 1,303,756 | True | True | 1 | 1362.0 | 298.2 x 133.8 x 114.9 | 19.0% |
 
 ## Body wall thickness (SDF ray sampling)
 
 | samples | p01 | p05 | median | share < 2.5 mm |
 |---|---|---|---|---|
-| 2402 | 2.65 | 3.95 | 10.25 | 0.79% |
+| 2433 | 2.18 | 3.51 | 10.05 | 1.44% |
 
 Thin samples are expected on the 1.5 mm cables, guide sleeves and eyelet rims, which are features rather than walls.
 
@@ -31,4 +31,5 @@ Thin samples are expected on the 1.5 mm cables, guide sleeves and eyelet rims, w
 
 ## Warnings
 
-- outsole: removed 3 floating fragment(s)
+- outsole: removed 12 floating fragment(s)
+- laces: removed 5 floating fragment(s)
