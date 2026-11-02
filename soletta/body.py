@@ -46,7 +46,11 @@ def upper_field(prof, X, Y, Z, n_lo=3.5, n_hi=2.4):
     rm = rho_parts(X - dx)[0]
     gx = (rp - rm) / (2 * dx)
     g = np.sqrt(gx * gx + gy * gy + gz * gz)
-    return (rho - 1.0) / np.maximum(g, 1e-3)
+    d = (rho - 1.0) / np.maximum(g, 1e-3)
+    # The normalised superellipse degenerates where Wu -> 0 (toe/heel tips);
+    # bound it by the exact planform distance so it can never leak outside.
+    bound = np.maximum(prof.upper2d(X, Y), np.maximum(Z - prof.Zt(X), prof.zb(X) - Z))
+    return np.maximum(d, bound)
 
 
 def midsole_field(prof, X, Y, Z):
@@ -236,8 +240,12 @@ def build_body(prof, log=print):
             if not hit[0]:
                 raise RuntimeError(f"dial ray missed at x={x} z={z} side={side}")
             n = N[0].copy()
-            n[0] *= 0.6
-            n[2] *= 0.5
+            # keep the dial face near-vertical: the hit can land on the
+            # under-curve of the upper, whose normal points steeply down
+            n[0] *= 0.3
+            n[1] = side * max(abs(n[1]), 0.6)
+            n[2] = float(np.clip(n[2] * 0.5, -0.08, 0.35))
+            n /= np.linalg.norm(n)
             fr = Frame(P[0], n, ex_hint=(1.0, 0.0, 0.0))
             # seat height: highest body point under the dial footprint (+ margin)
             pts = [(0.0, 0.0)]
@@ -250,6 +258,7 @@ def build_body(prof, log=print):
             _, h_ok, t = ray_hit(sc, O, D, 80.0, 0.25, m.mark_base)
             heights = 40.0 - t[h_ok]
             t_pt = max(dp["pod_height"], float(heights.max()) + 2.0) if h_ok.any() else dp["pod_height"]
+            t_pt = min(t_pt, dp.get("max_seat_height", 9.0))
             name = ("L" if side > 0 else "R") + str(i + 1)
             m.dials.append(dict(name=name, side=side, index=i, frame=fr, seat=t_pt,
                                 origin=fr.world(0, 0, t_pt + dp["seat_gap"])))

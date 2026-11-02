@@ -213,8 +213,6 @@ def main():
                    (np.asarray(laces_p.vertices), np.asarray(laces_p.faces), laces_C)] + dial_parts
     export_glb(color_parts, os.path.join(out, "assembly", "soletta_assembly_color.glb"))
 
-    export_step(model, body_p, outsole_p, laces_p, dial_base, dials, params, out)
-
     # ---------------------------------------------------------------- renders
     dial_info = {d["name"]: (d["origin"], d["frame"].ez) for d in model.dials}
     views = render(color_parts, dial_info)
@@ -224,13 +222,18 @@ def main():
         render_parts(outsole_p, outsole_C)
 
     # ---------------------------------------------------------------- report
-    report["elapsed_s"] = round(time.time() - T0, 1)
-    report["dial_frames"] = [dict(name=d["name"], origin=[round(float(v), 2) for v in d["origin"]],
-                                  axis=[round(float(v), 3) for v in d["frame"].ez],
-                                  seat_height=round(float(d["seat"]), 2)) for d in model.dials]
-    with open("reports/report.json", "w") as f:
-        json.dump(report, f, indent=2, default=float)
-    write_markdown(report, "reports/report.md")
+    def write_report():
+        report["elapsed_s"] = round(time.time() - T0, 1)
+        report["dial_frames"] = [dict(name=d["name"], origin=[round(float(v), 2) for v in d["origin"]],
+                                      axis=[round(float(v), 3) for v in d["frame"].ez],
+                                      seat_height=round(float(d["seat"]), 2)) for d in model.dials]
+        with open("reports/report.json", "w") as f:
+            json.dump(report, f, indent=2, default=float)
+        write_markdown(report, "reports/report.md")
+
+    write_report()  # early copy so renders + report survive a STEP crash
+    export_step(model, body_p, outsole_p, laces_p, dial_base, dials, params, out)
+    write_report()
     package(out)
     log("done")
 
@@ -259,16 +262,22 @@ def export_step(model, body_p, outsole_p, laces_p, dial_base, dials, params, out
     for name, mesh, target in (("body", body_p, sp["body_faces"]),
                                ("outsole", outsole_p, sp["outsole_faces"]),
                                ("lace_assembly", laces_p, sp["lace_faces"])):
-        dm = M.decimate(mesh, target) or mesh
+        dm = M.decimate(mesh, target)
+        if dm is None or len(dm.faces) > 3 * target:
+            WARN.append(f"STEP: {name} could not be reduced to ~{target} facets; skipped")
+            log(f"STEP: {name} skipped (decimation failed)")
+            continue
         t = time.time()
         solids[name] = cq.Shape.cast(M.mesh_to_occ_solid(dm))
         log(f"STEP: {name} faceted solid from {len(dm.faces)} facets in {time.time() - t:.1f}s")
         solids[name].exportStep(os.path.join(out, "step", f"{name}.step"))
     dial_base.exportStep(os.path.join(out, "step", "dial_single_exact_brep.step"))
     assy = cq.Assembly(name="soletta_shoe")
-    assy.add(solids["body"], name="main_shoe_body", color=cq.Color(0.45, 0.12, 0.16))
-    assy.add(solids["outsole"], name="outsole", color=cq.Color(0.11, 0.11, 0.12))
-    assy.add(solids["lace_assembly"], name="lace_assembly", color=cq.Color(0.92, 0.9, 0.83))
+    for key, nm, col in (("body", "main_shoe_body", (0.45, 0.12, 0.16)),
+                         ("outsole", "outsole", (0.11, 0.11, 0.12)),
+                         ("lace_assembly", "lace_assembly", (0.92, 0.9, 0.83))):
+        if key in solids:
+            assy.add(solids[key], name=nm, color=cq.Color(*col))
     for d in dials:
         assy.add(d["shape"], name=f"dial_{d['name']}", color=cq.Color(0.14, 0.14, 0.15))
     path = os.path.join(out, "step", "soletta_assembly.step")

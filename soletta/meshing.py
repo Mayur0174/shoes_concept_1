@@ -89,24 +89,73 @@ def wall_thickness(scene, mesh, upto=None, n=4000, seed=1):
                 points_below_2_5mm=int((v < 2.5).sum()))
 
 
+def _clean(d):
+    d.merge_vertices()
+    d.update_faces(d.nondegenerate_faces())
+    d.update_faces(d.unique_faces())
+    d.remove_unreferenced_vertices()
+    if not d.is_winding_consistent:
+        trimesh.repair.fix_winding(d)
+    if not d.is_watertight:
+        trimesh.repair.fill_holes(d)
+    if d.is_watertight and d.volume < 0:
+        d.invert()
+    return d
+
+
+def _ok(d):
+    return d is not None and len(d.faces) > 0 and d.is_watertight and d.is_winding_consistent
+
+
+def _fast_simplify(m, target_faces):
+    import fast_simplification
+    reduction = 1.0 - target_faces / len(m.faces)
+    V, F = fast_simplification.simplify(np.asarray(m.vertices, np.float32),
+                                        np.asarray(m.faces, np.int32), reduction)
+    return _clean(trimesh.Trimesh(V, F, process=True))
+
+
+def _manifold_simplify(m, target_faces):
+    """Manifold-preserving simplification: raise tolerance until under target."""
+    man = to_manifold(m)
+    best = None
+    tol = 0.02
+    for _ in range(14):
+        r = from_manifold(man.simplify(tol))
+        if _ok(r):
+            best = r
+            if len(r.faces) <= target_faces * 1.15:
+                return r
+        tol *= 1.6
+    return best
+
+
 def decimate(m, target_faces):
+    """Return a watertight decimated copy near target_faces, or None."""
     if len(m.faces) <= target_faces:
         return m
+    # 1) quadric in a few gentle passes (big single-pass reductions tear thin lugs)
     try:
-        import fast_simplification
-        reduction = 1.0 - target_faces / len(m.faces)
-        V, F = fast_simplification.simplify(np.asarray(m.vertices, np.float32),
-                                            np.asarray(m.faces, np.int32), reduction)
-        d = trimesh.Trimesh(V, F, process=True)
-        if d.is_watertight and d.is_winding_consistent:
-            if d.volume < 0:
-                d.invert()
-            return d
-        trimesh.repair.fill_holes(d)
-        if d.is_watertight:
+        d = m
+        for _ in range(6):
+            if len(d.faces) <= target_faces * 1.1:
+                break
+            step = max(target_faces, int(len(d.faces) * 0.35))
+            nd = _fast_simplify(d, step)
+            if not _ok(nd):
+                break
+            d = nd
+        if _ok(d) and d is not m and len(d.faces) <= target_faces * 1.5:
             return d
     except Exception as e:  # noqa: BLE001
-        print("decimate failed:", e)
+        print("quadric decimate failed:", e)
+    # 2) manifold3d simplify (topology safe)
+    try:
+        d = _manifold_simplify(m, target_faces)
+        if _ok(d):
+            return d
+    except Exception as e:  # noqa: BLE001
+        print("manifold simplify failed:", e)
     return None
 
 
@@ -117,11 +166,19 @@ def to_manifold(m):
     return m3d.Manifold(mesh)
 
 
-def from_manifold(man):
+def from_manifold(man, min_volume=1.0):
+    # drop zero-volume slivers left by coplanar contacts
+    parts = man.decompose()
+    keep = [q for q in parts if abs(q.volume()) >= min_volume]
+    if keep and len(keep) < len(parts):
+        import manifold3d as m3d
+        man = m3d.Manifold.compose(keep) if hasattr(m3d.Manifold, "compose") else sum(keep[1:], keep[0])
     mm = man.to_mesh()
     V = np.asarray(mm.vert_properties)[:, :3]
     F = np.asarray(mm.tri_verts)
-    return trimesh.Trimesh(V, F, process=True)
+    # process=False: manifold output is already indexed; merging nearby
+    # vertices here would break its topology
+    return trimesh.Trimesh(V, F, process=False)
 
 
 def boolean(a, b, op):

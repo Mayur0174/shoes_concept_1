@@ -7,3 +7,4 @@ manifold3d
 fast-simplification
 matplotlib
 pyvista
+lxml

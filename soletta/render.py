@@ -110,6 +110,7 @@ def render_all(parts, outdir, dial_info, log=print):
         sy = np.abs(corners @ upv).max()
         cam.parallel_scale = max(sy, sx / aspect) * 1.08
         pl.reset_camera_clipping_range()
+        pl.render()
         path = os.path.join(outdir, f"view_{name}.png")
         pl.screenshot(path)
         out[name] = (path, label)
@@ -125,6 +126,7 @@ def render_all(parts, outdir, dial_info, log=print):
         cam.up = (0, 0, 1)
         cam.parallel_scale = 32
         pl.reset_camera_clipping_range()
+        pl.render()
         path = os.path.join(outdir, f"view_dial_{key}.png")
         pl.screenshot(path)
         out["dial_" + key] = (path, label)
