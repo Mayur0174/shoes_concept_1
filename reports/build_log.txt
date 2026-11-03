@@ -1,55 +1,55 @@
 [    0.0s] quality=full resolution={'body': 0.35, 'outsole': 0.25, 'laces': 0.22}
-[   11.7s] profiles + planform maps ready
-[   11.7s] body: base program ready, placing dials
-[   12.3s] body: dials, pods and brackets placed; routing cables
-[   12.9s] body: cables, guides and anchors added; placing eyelets
-[   13.0s] body: program complete (80 ops)
-[   15.2s] laces: 17 lace chains
-[   19.3s] dials: 6 B-rep dials, volume each 5598 mm^3
-[   19.3s] body: evaluating SDF on 880x506x329 grid @ 0.35 mm
-[   19.8s]   body: slab 0/880
-[   24.8s]   body: slab 120/880
-[   31.3s]   body: slab 240/880
-[   38.1s]   body: slab 360/880
-[   45.5s]   body: slab 480/880
-[   52.2s]   body: slab 600/880
-[   57.2s]   body: slab 720/880
-[   61.5s]   body: slab 840/880
-[   62.5s] body: marching cubes
-[   71.4s] body: 2856942 triangles, watertight=True
-[   71.4s] outsole: evaluating SDF on 1213x627x113 grid @ 0.25 mm
-[   71.4s]   outsole: slab 0/1213
-[   71.9s]   outsole: slab 120/1213
-[   72.5s]   outsole: slab 240/1213
-[   73.0s]   outsole: slab 360/1213
-[   73.5s]   outsole: slab 480/1213
-[   74.0s]   outsole: slab 600/1213
-[   74.6s]   outsole: slab 720/1213
-[   75.1s]   outsole: slab 840/1213
-[   75.6s]   outsole: slab 960/1213
-[   76.1s]   outsole: slab 1080/1213
-[   76.6s]   outsole: slab 1200/1213
-[   76.6s] outsole: marching cubes
+[   10.5s] profiles + planform maps ready
+[   10.5s] body: base program ready, placing dials
+[   13.5s] body: dial pods and channel posts placed; routing cable channels
+[   14.5s] body: cable channels, U-turn guides and bores added; placing eyelets
+[   14.7s] body: program complete (91 ops)
+[   17.8s] laces: 17 lace chains
+[   21.3s] dials: housing 4000, spool 2913, knob 6576 mm^3; checks {'spool_vs_knob_mm3': 0.0, 'engaged_rest_spool_vs_housing_mm3': 0.0, 'engaged_knob_vs_housing_mm3': 0.0, 'released_spin_max_interference_mm3': 0.0, 'engaged_turning_pawl_flex_overlap_mm3': 1.086, 'tooth_engagement_mm': 0.8, 'clicks_per_turn': 24, 'cable_per_turn_mm_each_end': 53.4, 'release_lift_mm': 3.2, 'stack_height_mm': 19.6}
+[   21.4s] body: evaluating SDF on 880x584x329 grid @ 0.35 mm
+[   22.6s]   body: slab 0/880
+[   35.6s]   body: slab 120/880
+[   49.6s]   body: slab 240/880
+[   64.7s]   body: slab 360/880
+[   79.8s]   body: slab 480/880
+[   94.5s]   body: slab 600/880
+[  107.3s]   body: slab 720/880
+[  119.2s]   body: slab 840/880
+[  122.0s] body: marching cubes
+[  132.9s] body: 3772828 triangles, watertight=True
+[  132.9s] outsole: evaluating SDF on 1213x734x113 grid @ 0.25 mm
+[  133.0s]   outsole: slab 0/1213
+[  133.5s]   outsole: slab 120/1213
+[  134.1s]   outsole: slab 240/1213
+[  134.7s]   outsole: slab 360/1213
+[  135.3s]   outsole: slab 480/1213
+[  135.8s]   outsole: slab 600/1213
+[  136.4s]   outsole: slab 720/1213
+[  137.0s]   outsole: slab 840/1213
+[  137.6s]   outsole: slab 960/1213
+[  138.1s]   outsole: slab 1080/1213
+[  138.7s]   outsole: slab 1200/1213
+[  138.7s] outsole: marching cubes
+[  146.8s] outsole: 2437890 triangles, watertight=True
+[  146.8s] laces: evaluating SDF on 471x402x371 grid @ 0.22 mm
+[  146.8s]   laces: slab 0/471
+[  147.0s]   laces: slab 120/471
+[  147.3s]   laces: slab 240/471
+[  147.4s]   laces: slab 360/471
+[  147.5s] laces: marching cubes
 /opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/trimesh/triangles.py:302: RuntimeWarning: invalid value encountered in divide
   center_mass = integrated[1:4] / volume
-[   84.2s] outsole: 2437892 triangles, watertight=True
-[   84.2s] laces: evaluating SDF on 478x404x282 grid @ 0.22 mm
-[   84.2s]   laces: slab 0/478
-[   84.4s]   laces: slab 120/478
-[   84.7s]   laces: slab 240/478
-[   84.8s]   laces: slab 360/478
-[   84.9s] laces: marching cubes
-[   87.9s] laces: 932248 triangles, watertight=True
-[   94.1s] insole logo debossed
-[   96.6s] validating meshes
-[  147.4s] exporting STL
-[  159.9s] colouring
-[  186.2s] rendered 9 views with pyvista
-[  192.9s] rendered 7 views with pyvista
-[  192.9s] STEP: building faceted solids for organic bodies
-[  207.2s] STEP: body faceted solid from 61676 facets in 7.9s
-[  232.4s] STEP: outsole faceted solid from 45616 facets in 5.9s
-[  246.6s] STEP: lace_assembly faceted solid from 14948 facets in 1.9s
-[  289.3s] STEP: assembly written
-[  338.5s] release packages: contact_sheet.png, report.md, soletta_STEP.zip, soletta_STL_components.zip, soletta_assembly.zip, soletta_printable.zip
-[  338.5s] done
+[  151.3s] laces: 1131922 triangles, watertight=True
+[  159.2s] insole logo debossed
+[  163.5s] validating meshes
+[  222.5s] exporting STL
+[  235.0s] colouring
+[  261.0s] rendered 9 views with pyvista
+[  267.6s] rendered 7 views with pyvista
+[  268.3s] STEP: building faceted solids for organic bodies
+[  277.1s] STEP: body faceted solid from 39156 facets in 4.7s
+[  294.5s] STEP: outsole faceted solid from 45700 facets in 5.4s
+[  307.6s] STEP: lace_assembly faceted solid from 16072 facets in 1.9s
+[  340.4s] STEP: assembly written
+[  386.9s] release packages: contact_sheet.png, dial_mechanism_sections.png, report.md, soletta_STEP.zip, soletta_STL_components.zip, soletta_assembly.zip, soletta_printable.zip
+[  386.9s] done

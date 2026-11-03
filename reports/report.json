@@ -72,7 +72,23 @@
       "wrap_thickness": 3.0,
       "lace_panel_thickness": 1.5,
       "quarter_panel_thickness": 1.0,
-      "throat_x": 150.0
+      "throat_x": 150.0,
+      "inner_wall": 2.6,
+      "slot_x": [
+        138.0,
+        226.0
+      ],
+      "slot_width": 8.0,
+      "tongue": {
+        "gap": 1.0,
+        "thickness": 2.2,
+        "x": [
+          128.0,
+          232.0
+        ],
+        "half_width": 21.0,
+        "z_max": 100.0
+      }
     },
     "heel": {
       "pull_tab_height": 33.0,
@@ -107,7 +123,11 @@
       "socket_depth": 5.0
     },
     "cables": {
-      "diameter": 1.5,
+      "line_diameter": 1.0,
+      "sheath_diameter": 4.0,
+      "bore_diameter": 1.6,
+      "bore_center_above_surface": 1.6,
+      "uturn_radius": 4.5,
       "targets_xz": [
         [
           226.0,
@@ -155,49 +175,49 @@
   "components": [
     {
       "name": "body",
-      "triangles": 2856768,
-      "vertices": 1428358,
+      "triangles": 3772654,
+      "vertices": 1886251,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 1255387.3784067961,
-      "area_mm2": 139755.02937409107,
+      "volume_mm3": 989925.2468866002,
+      "area_mm2": 180966.5610295181,
       "bodies": 1,
-      "euler": -26,
+      "euler": -76,
       "bounds_mm": [
         [
           -5.08,
-          -65.74,
+          -64.15,
           8.0
         ],
         [
           293.12,
-          68.07,
+          66.45,
           114.89
         ]
       ],
       "extents_mm": [
         298.2,
-        133.81,
+        130.59,
         106.89
       ],
-      "overhang_area_fraction_gt45": 0.12907101508892685,
+      "overhang_area_fraction_gt45": 0.17468106072213485,
       "wall_thickness": {
-        "samples": 2433,
-        "p01": 2.18,
-        "p05": 3.51,
-        "median": 10.05,
-        "frac_below_2_5mm": 0.0144,
-        "points_below_2_5mm": 35
+        "samples": 3460,
+        "p01": 1.25,
+        "p05": 2.25,
+        "median": 8.05,
+        "frac_below_2_5mm": 0.0789,
+        "points_below_2_5mm": 273
       }
     },
     {
       "name": "outsole",
-      "triangles": 2437892,
-      "vertices": 1218936,
+      "triangles": 2437890,
+      "vertices": 1218935,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 106608.29564398527,
-      "area_mm2": 62549.193516932704,
+      "volume_mm3": 106608.29553937382,
+      "area_mm2": 62549.193432932705,
       "bodies": 1,
       "euler": -10,
       "bounds_mm": [
@@ -217,108 +237,178 @@
         112.81,
         22.82
       ],
-      "overhang_area_fraction_gt45": 0.24462930541890818
+      "overhang_area_fraction_gt45": 0.2446293058750053
     },
     {
       "name": "laces",
-      "triangles": 932248,
-      "vertices": 466100,
+      "triangles": 1131922,
+      "vertices": 565925,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 19752.13073900339,
-      "area_mm2": 15249.705006522046,
+      "volume_mm3": 25224.720208023286,
+      "area_mm2": 18968.613649768573,
       "bodies": 1,
-      "euler": -24,
+      "euler": -36,
       "bounds_mm": [
         [
-          139.62,
-          -37.57,
-          57.69
+          141.17,
+          -37.22,
+          37.75
         ],
         [
           235.94,
-          42.57,
-          112.65
+          42.28,
+          110.54
         ]
       ],
       "extents_mm": [
-        96.32,
-        80.14,
-        54.96
+        94.77,
+        79.5,
+        72.79
       ],
-      "overhang_area_fraction_gt45": 0.15337811695950837
+      "overhang_area_fraction_gt45": 0.1314646511017617
     },
     {
-      "name": "dial (each)",
-      "triangles": 18948,
-      "vertices": 9476,
+      "name": "dial housing (each)",
+      "triangles": 8852,
+      "vertices": 4424,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 5596.6425426170945,
-      "area_mm2": 2885.1774584610143,
+      "volume_mm3": 3994.8393804346283,
+      "area_mm2": 4629.48359564414,
+      "bodies": 1,
+      "euler": -2,
+      "bounds_mm": [
+        [
+          -17.99,
+          -20.17,
+          0.0
+        ],
+        [
+          18.0,
+          20.17,
+          13.39
+        ]
+      ],
+      "extents_mm": [
+        35.99,
+        40.35,
+        13.39
+      ],
+      "overhang_area_fraction_gt45": 0.002359587081035265
+    },
+    {
+      "name": "dial spool (each)",
+      "triangles": 5596,
+      "vertices": 2796,
+      "watertight": true,
+      "winding_consistent": true,
+      "volume_mm3": 2909.2889812005537,
+      "area_mm2": 2416.5505659845303,
+      "bodies": 1,
+      "euler": -2,
+      "bounds_mm": [
+        [
+          -12.6,
+          -13.28,
+          2.0
+        ],
+        [
+          13.38,
+          12.6,
+          14.6
+        ]
+      ],
+      "extents_mm": [
+        25.98,
+        25.88,
+        12.6
+      ],
+      "overhang_area_fraction_gt45": 0.04106738890472033
+    },
+    {
+      "name": "dial knob (each)",
+      "triangles": 14328,
+      "vertices": 7166,
+      "watertight": true,
+      "winding_consistent": true,
+      "volume_mm3": 6573.640697166171,
+      "area_mm2": 3064.122139937794,
       "bodies": 1,
       "euler": 2,
       "bounds_mm": [
         [
-          -16.0,
-          -16.0,
-          0.0
+          -17.0,
+          -17.0,
+          11.6
         ],
         [
-          16.0,
-          16.0,
-          8.0
+          17.0,
+          17.0,
+          19.6
         ]
       ],
       "extents_mm": [
-        32.0,
-        32.0,
+        34.0,
+        34.0,
         8.0
       ],
-      "overhang_area_fraction_gt45": 0.16632358881690895
+      "overhang_area_fraction_gt45": 0.048105693798110194
     },
     {
       "name": "printable shoe (body+outsole)",
-      "triangles": 1303756,
-      "vertices": 651518,
+      "triangles": 943164,
+      "vertices": 471278,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 1361962.7244640647,
-      "area_mm2": 165647.54460557026,
+      "volume_mm3": 1096483.9846878194,
+      "area_mm2": 223169.94211459497,
       "bodies": 1,
-      "euler": -360,
+      "euler": -304,
       "bounds_mm": [
         [
           -5.08,
-          -65.74,
+          -64.15,
           0.0
         ],
         [
           293.12,
-          68.07,
+          66.45,
           114.89
         ]
       ],
       "extents_mm": [
         298.2,
-        133.8,
+        130.59,
         114.89
       ],
-      "overhang_area_fraction_gt45": 0.1899708326381971
+      "overhang_area_fraction_gt45": 0.23833323759024203
     }
   ],
   "warnings": [
-    "outsole: removed 12 floating fragment(s)",
+    "outsole: removed 11 floating fragment(s)",
     "laces: removed 5 floating fragment(s)"
   ],
-  "elapsed_s": 289.3,
+  "mechanism": {
+    "spool_vs_knob_mm3": 0.0,
+    "engaged_rest_spool_vs_housing_mm3": 0.0,
+    "engaged_knob_vs_housing_mm3": 0.0,
+    "released_spin_max_interference_mm3": 0.0,
+    "engaged_turning_pawl_flex_overlap_mm3": 1.086,
+    "tooth_engagement_mm": 0.8,
+    "clicks_per_turn": 24,
+    "cable_per_turn_mm_each_end": 53.4,
+    "release_lift_mm": 3.2,
+    "stack_height_mm": 19.6
+  },
+  "elapsed_s": 340.4,
   "dial_frames": [
     {
       "name": "L1",
       "origin": [
-        185.86,
-        54.75,
-        45.74
+        185.63,
+        68.23,
+        53.6
       ],
       "axis": [
         -0.015,
@@ -330,9 +420,9 @@
     {
       "name": "L2",
       "origin": [
-        132.03,
-        45.21,
-        51.76
+        132.09,
+        60.67,
+        49.7
       ],
       "axis": [
         0.003,
@@ -344,23 +434,23 @@
     {
       "name": "L3",
       "origin": [
-        69.02,
-        42.66,
-        63.87
+        69.09,
+        60.72,
+        63.35
       ],
       "axis": [
         0.004,
         1.0,
         -0.029
       ],
-      "seat_height": 3.99
+      "seat_height": 6.46
     },
     {
       "name": "R1",
       "origin": [
-        185.66,
-        -52.43,
-        45.73
+        185.11,
+        -65.9,
+        53.59
       ],
       "axis": [
         -0.036,
@@ -372,9 +462,9 @@
     {
       "name": "R2",
       "origin": [
-        132.02,
-        -39.21,
-        51.76
+        132.04,
+        -54.68,
+        49.7
       ],
       "axis": [
         0.002,
@@ -386,16 +476,16 @@
     {
       "name": "R3",
       "origin": [
-        69.1,
-        -41.24,
-        63.87
+        69.51,
+        -59.52,
+        63.35
       ],
       "axis": [
         0.023,
         -0.999,
         -0.029
       ],
-      "seat_height": 3.98
+      "seat_height": 6.67
     }
   ]
 }
