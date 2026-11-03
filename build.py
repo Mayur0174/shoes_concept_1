@@ -112,7 +112,7 @@ def main():
     outsole_sc = build_outsole(prof)
 
     from soletta.dials import build_dials, tessellate
-    dial_base, dials = build_dials(model, log)
+    kit, dials = build_dials(model, log)
 
     # -------------------------------------------------------------- meshing
     L, W, H = prof.L, prof.W, prof.H
@@ -134,15 +134,18 @@ def main():
         body = deb
         log("insole logo debossed")
 
-    dial_meshes = []
-    for d in dials:
-        V, F = tessellate(d["shape"], 0.02, 0.15)
+    def occ_mesh(shape):
+        V, F = tessellate(shape, 0.02, 0.15)
         tm = trimesh.Trimesh(V, F, process=True)
         if tm.volume < 0:
             tm.invert()
-        dial_meshes.append((d, tm))
-    base_V, base_F = tessellate(dial_base, 0.02, 0.15)
-    dial_local = trimesh.Trimesh(base_V, base_F, process=True)
+        return tm
+
+    dial_meshes = []          # (dial, kind, mesh) placed on the shoe
+    for d in dials:
+        for kind in ("housing", "spool", "knob"):
+            dial_meshes.append((d, kind, occ_mesh(d[kind])))
+    local = {k: occ_mesh(kit[k]) for k in ("housing", "spool", "knob")}
 
     # ----------------------------------------------------------- validation
     log("validating meshes")
@@ -151,7 +154,9 @@ def main():
     report["components"].append(M.validate("body", body, wall_stats=ws))
     report["components"].append(M.validate("outsole", outsole))
     report["components"].append(M.validate("laces", laces))
-    report["components"].append(M.validate("dial (each)", dial_local))
+    for k in ("housing", "spool", "knob"):
+        report["components"].append(M.validate(f"dial {k} (each)", local[k]))
+    report["mechanism"] = kit["checks"]
 
     # ------------------------------------------------------------- printable
     pv = params["printable"]
@@ -173,29 +178,38 @@ def main():
     body_p.export(os.path.join(comp, "body.stl"))
     outsole_p.export(os.path.join(comp, "outsole.stl"))
     laces_p.export(os.path.join(comp, "lace_assembly.stl"))
-    dial_local.export(os.path.join(comp, "dial_single.stl"))
-    for d, tm in dial_meshes:
+    for k in ("housing", "spool", "knob"):
+        local[k].export(os.path.join(comp, f"dial_{k}.stl"))
+    for d, kind, tm in dial_meshes:
         side = "left" if d["side"] > 0 else "right"
-        tm.export(os.path.join(comp, f"dial_{side}_{d['name']}.stl"))
-    trimesh.util.concatenate([tm for d, tm in dial_meshes if d["side"] > 0]).export(
-        os.path.join(comp, "dials_left_x3.stl"))
-    trimesh.util.concatenate([tm for d, tm in dial_meshes if d["side"] < 0]).export(
-        os.path.join(comp, "dials_right_x3.stl"))
+        tm.export(os.path.join(comp, f"dial_{kind}_{side}_{d['name']}_in_place.stl"))
 
     prn = os.path.join(out, "printable")
     merged.export(os.path.join(prn, "shoe_body_with_outsole.stl"))
-    laces_p.export(os.path.join(prn, "laces_print_flexible.stl"))
+    # mechanism print plates in their print orientation (no supports):
+    # housing flange-down, spool pawls-down, knob face-down
+    oriented = {}
+    for k in ("housing", "spool", "knob"):
+        t = local[k].copy()
+        if k == "knob":
+            t.apply_transform(trimesh.transformations.rotation_matrix(np.pi, [1, 0, 0]))
+        t.apply_translation([0, 0, -t.bounds[0][2]])
+        oriented[k] = t
+        t.export(os.path.join(prn, f"dial_{k}_single.stl"))
+    pitch = 50.0
     plate = []
     for i in range(6):
-        t = dial_local.copy()
-        t.apply_translation([(i % 3) * (prof.p["dials"]["diameter"] + 8), (i // 3) * (prof.p["dials"]["diameter"] + 8), 0])
-        plate.append(t)
-    trimesh.util.concatenate(plate).export(os.path.join(prn, "dials_x6_plate.stl"))
+        for j, k in enumerate(("housing", "spool", "knob")):
+            t = oriented[k].copy()
+            t.apply_translation([j * pitch, i * pitch, 0])
+            plate.append(t)
+    trimesh.util.concatenate(plate[:9]).export(os.path.join(prn, "dial_kit_x3_plate_A.stl"))
+    trimesh.util.concatenate(plate[9:]).export(os.path.join(prn, "dial_kit_x3_plate_B.stl"))
     export_3mf(merged, os.path.join(prn, "shoe_body_with_outsole.3mf"))
 
-    hi_parts = [body, outsole, laces] + [tm for _, tm in dial_meshes]
+    hi_parts = [body, outsole, laces] + [tm for _, _, tm in dial_meshes]
     trimesh.util.concatenate(hi_parts).export(os.path.join(out, "assembly", "soletta_assembly_hires.stl"))
-    pr_parts = [body_p, outsole_p, laces_p] + [tm for _, tm in dial_meshes]
+    pr_parts = [body_p, outsole_p, laces_p] + [tm for _, _, tm in dial_meshes]
     trimesh.util.concatenate(pr_parts).export(os.path.join(out, "assembly", "soletta_assembly.stl"))
 
     # colours
@@ -205,8 +219,8 @@ def main():
     outsole_C = RD.solid_colors(len(outsole_p.vertices), "#1d1e20")
     laces_C = RD.solid_colors(len(laces_p.vertices), "#ebe5d4")
     dial_parts = []
-    for d, tm in dial_meshes:
-        C = RD.dial_colors(np.asarray(tm.vertices), d["frame"], d["origin"], prof.p["dials"])
+    for d, kind, tm in dial_meshes:
+        C = RD.dial_colors(np.asarray(tm.vertices), d["frame"], d["origin"], kind)
         dial_parts.append((np.asarray(tm.vertices), np.asarray(tm.faces), C))
     color_parts = [(np.asarray(body_p.vertices), np.asarray(body_p.faces), body_C),
                    (np.asarray(outsole_p.vertices), np.asarray(outsole_p.faces), outsole_C),
@@ -220,6 +234,7 @@ def main():
         RD.contact_sheet(views, "renders/contact_sheet.png",
                          "Soletta dual-dial trail shoe  |  CAD reconstruction  |  %s quality" % quality)
         render_parts(outsole_p, outsole_C)
+    mech_sheet(local["housing"], local["spool"], local["knob"])
 
     # ---------------------------------------------------------------- report
     def write_report():
@@ -232,7 +247,7 @@ def main():
         write_markdown(report, "reports/report.md")
 
     write_report()  # early copy so renders + report survive a STEP crash
-    export_step(model, body_p, outsole_p, laces_p, dial_base, dials, params, out)
+    export_step(model, body_p, outsole_p, laces_p, kit, dials, params, out)
     write_report()
     package(out)
     log("done")
@@ -254,7 +269,7 @@ def export_glb(parts, path):
 
 
 @optional("STEP export")
-def export_step(model, body_p, outsole_p, laces_p, dial_base, dials, params, out):
+def export_step(model, body_p, outsole_p, laces_p, kit, dials, params, out):
     import cadquery as cq
     sp = params["step"]
     log("STEP: building faceted solids for organic bodies")
@@ -271,7 +286,9 @@ def export_step(model, body_p, outsole_p, laces_p, dial_base, dials, params, out
         solids[name] = cq.Shape.cast(M.mesh_to_occ_solid(dm))
         log(f"STEP: {name} faceted solid from {len(dm.faces)} facets in {time.time() - t:.1f}s")
         solids[name].exportStep(os.path.join(out, "step", f"{name}.step"))
-    dial_base.exportStep(os.path.join(out, "step", "dial_single_exact_brep.step"))
+    kit["housing"].exportStep(os.path.join(out, "step", "dial_housing_exact_brep.step"))
+    kit["spool"].exportStep(os.path.join(out, "step", "dial_spool_exact_brep.step"))
+    kit["knob"].exportStep(os.path.join(out, "step", "dial_knob_exact_brep.step"))
     assy = cq.Assembly(name="soletta_shoe")
     for key, nm, col in (("body", "main_shoe_body", (0.45, 0.12, 0.16)),
                          ("outsole", "outsole", (0.11, 0.11, 0.12)),
@@ -279,13 +296,20 @@ def export_step(model, body_p, outsole_p, laces_p, dial_base, dials, params, out
         if key in solids:
             assy.add(solids[key], name=nm, color=cq.Color(*col))
     for d in dials:
-        assy.add(d["shape"], name=f"dial_{d['name']}", color=cq.Color(0.14, 0.14, 0.15))
+        assy.add(d["housing"], name=f"dial_housing_{d['name']}", color=cq.Color(0.29, 0.30, 0.32))
+        assy.add(d["spool"], name=f"dial_spool_{d['name']}", color=cq.Color(0.20, 0.20, 0.21))
+        assy.add(d["knob"], name=f"dial_knob_{d['name']}", color=cq.Color(0.14, 0.14, 0.15))
     path = os.path.join(out, "step", "soletta_assembly.step")
     if hasattr(assy, "export"):
         assy.export(path)
     else:
         assy.save(path)
     log("STEP: assembly written")
+
+
+@optional("mechanism sheet")
+def mech_sheet(housing, spool, knob):
+    return RD.mechanism_sheet(housing, spool, knob, "renders/dial_mechanism_sections.png")
 
 
 @optional("rendering")
@@ -313,8 +337,12 @@ def write_markdown(r, path):
         lines += ["", "## Body wall thickness (SDF ray sampling)", "",
                   "| samples | p01 | p05 | median | share < 2.5 mm |", "|---|---|---|---|---|",
                   f"| {wt['samples']} | {wt['p01']} | {wt['p05']} | {wt['median']} | {wt['frac_below_2_5mm']:.2%} |",
-                  "", "Thin samples are expected on the 1.5 mm cables, guide sleeves and eyelet rims, "
+                  "", "Thin samples are expected on the cable channel sheaths (4 mm tube, 1.6 mm bore), the inner tongue, guide clips and eyelet rims, "
                   "which are features rather than walls."]
+    mc = r.get("mechanism")
+    if mc:
+        lines += ["", "## Dial mechanism checks (exact B-rep)", "", "| check | value |", "|---|---|"]
+        lines += [f"| {k} | {v} |" for k, v in mc.items()]
     lines += ["", "## Dial frames", "", "| Dial | Origin (mm) | Axis | Seat height |", "|---|---|---|---|"]
     for d in r["dial_frames"]:
         lines.append(f"| {d['name']} | {d['origin']} | {d['axis']} | {d['seat_height']} |")
@@ -339,9 +367,10 @@ def package(out):
 
     zipdir("soletta_STEP.zip", [os.path.join(out, "step")])
     zipdir("soletta_STL_components.zip", [os.path.join(out, "components")])
-    zipdir("soletta_printable.zip", [os.path.join(out, "printable")])
+    zipdir("soletta_printable.zip", [os.path.join(out, "printable")],
+           ["README.md", "renders/dial_mechanism_sections.png"])
     zipdir("soletta_assembly.zip", [os.path.join(out, "assembly")])
-    for p in ("renders/contact_sheet.png", "reports/report.md"):
+    for p in ("renders/contact_sheet.png", "renders/dial_mechanism_sections.png", "reports/report.md"):
         if os.path.exists(p):
             shutil.copy(p, rel)
     log("release packages: " + ", ".join(sorted(os.listdir(rel))))

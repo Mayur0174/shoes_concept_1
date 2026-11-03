@@ -45,11 +45,15 @@ def solid_colors(n, hexcol):
     return np.tile(hex2rgb(hexcol), (n, 1))
 
 
-def dial_colors(V, frame, origin, dp):
+def dial_colors(V, frame, origin, kind):
     q = V - np.asarray(origin)
     lx, ly, lz = q @ frame.ex, q @ frame.ey, q @ frame.ez
+    if kind == "housing":
+        return solid_colors(len(V), "#4a4d52")
+    if kind == "spool":
+        return solid_colors(len(V), "#333436")
     C = solid_colors(len(V), "#232425")
-    cap = (np.hypot(lx, ly) < dp["cap_diameter"] / 2 + 0.05) & (lz > dp["thickness"] - 1.05)
+    cap = (np.hypot(lx, ly) < 9.05) & (lz > 18.5)
     C[cap] = hex2rgb("#9a9da1")
     return C
 
@@ -199,3 +203,52 @@ def contact_sheet(views, path, title):
     fig.suptitle(title, fontsize=15, color="#222")
     fig.savefig(path, bbox_inches="tight", facecolor=fig.get_facecolor())
     plt.close(fig)
+
+
+def mechanism_sheet(housing, spool, knob, path, lift=3.2):
+    """2D sections of the dial mechanism: ratchet layer, spool layer, and
+    vertical half-sections in the engaged and released positions."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    def draw(ax, mesh, origin, normal, color, to2d, shift=(0, 0, 0)):
+        m = mesh.copy()
+        m.apply_translation(shift)
+        s = m.section(plane_origin=origin, plane_normal=normal)
+        if s is None:
+            return
+        for e in s.discrete:
+            xy = to2d(e)
+            ax.fill(xy[:, 0], xy[:, 1], color=color, alpha=0.35, lw=0)
+            ax.plot(xy[:, 0], xy[:, 1], color=color, lw=0.9)
+
+    fig, axs = plt.subplots(2, 2, figsize=(13, 12))
+    top = lambda e: e[:, :2]
+    side = lambda e: e[:, [0, 2]]
+    H, S, K = "#55595f", "#d24b2a", "#2a6fd2"
+    parts = ((housing, H), (spool, S), (knob, K))
+    ax = axs[0, 0]
+    for m_, c_ in parts:
+        draw(ax, m_, [0, 0, 3.2], [0, 0, 1], c_, top)
+    ax.set_title("Ratchet layer (z = 3.2 mm): 3 pawls in 24 teeth\n"
+                 "turn clockwise = tighten (clicks), counter-clockwise = locked")
+    ax = axs[0, 1]
+    for m_, c_ in parts:
+        draw(ax, m_, [0, 0, 10.0], [0, 0, 1], c_, top)
+    ax.set_title("Cable groove (z = 10 mm): ports and knot holes")
+    for ax, sh, ttl in ((axs[1, 0], 0.0, "Half-section, knob pushed DOWN: engaged"),
+                        (axs[1, 1], lift, "Half-section, knob pulled UP %.1f mm: released" % lift)):
+        draw(ax, housing, [0, 0.8, 0], [0, 1, 0], H, side)
+        draw(ax, spool, [0, 0.8, 0], [0, 1, 0], S, side, shift=(0, 0, sh))
+        draw(ax, knob, [0, 0.8, 0], [0, 1, 0], K, side, shift=(0, 0, sh))
+        ax.set_title(ttl)
+    for a in axs.ravel():
+        a.set_aspect("equal")
+        a.grid(alpha=0.25)
+        a.set_xlabel("mm")
+    fig.suptitle("Printed dial mechanism: housing (grey), spool (red), knob (blue)", fontsize=14)
+    plt.tight_layout()
+    plt.savefig(path, dpi=110)
+    plt.close(fig)
+    return path

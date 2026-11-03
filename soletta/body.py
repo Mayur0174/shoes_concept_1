@@ -102,6 +102,46 @@ def well_field(prof, X, Y, Z):
     return smax(d2, prof.ztop(X) - Z, 2.0)
 
 
+def foot_cavity_field(prof, X, Y, Z):
+    """Hollow toe box / vamp: the upper offset inward by the wall thickness,
+    above the footbed, joining the heel well behind the throat."""
+    up = prof.p["upper"]
+    fu = upper_field(prof, X, Y, Z)
+    d = fu + up["inner_wall"]
+    d = smax(d, prof.ztop(X) - Z, 2.0)
+    return smax(d, (up["throat_x"] - 25.0) * prof.sx - X, 6.0)
+
+
+def throat_slot_field(prof, X, Y, Z):
+    """Lacing opening along the instep: the two eyelet rows can be pulled
+    together over the tongue."""
+    up = prof.p["upper"]
+    x0, x1 = up["slot_x"][0] * prof.sx, up["slot_x"][1] * prof.sx
+    a = np.abs(Y - prof.cy(X)) - up["slot_width"] / 2
+    b = np.maximum(x0 - X, X - x1)
+    c = prof.ztop(X) + 8.0 - Z
+    return round_intersect(round_intersect(a, b, 1.5), c, 0.5)
+
+
+def inner_tongue_field(prof, X, Y, Z):
+    """Tongue under the slot, following the inside of the upper with a gap so
+    the quarters slide over it; rooted to the vamp at the front of the slot."""
+    up = prof.p["upper"]
+    tg = up["tongue"]
+    fu = upper_field(prof, X, Y, Z)
+    depth = -fu
+    d0 = up["inner_wall"] + tg["gap"]
+    band = np.abs(depth - (d0 + tg["thickness"] / 2)) - tg["thickness"] / 2
+    x0, x1 = tg["x"][0] * prof.sx, tg["x"][1] * prof.sx
+    root0 = up["slot_x"][1] * prof.sx - 1.0
+    root = np.maximum(fu, depth - (d0 + tg["thickness"]))
+    root = np.maximum(root, np.maximum(root0 - X, X - (root0 + 8.0)))
+    band = np.maximum(band, np.maximum(x0 - X, X - root0 - 0.5))
+    w = np.abs(Y - prof.cy(X)) - tg["half_width"]
+    zb = np.maximum(prof.ztop(X) + 10.0 - Z, Z - tg["z_max"] * prof.sz)
+    return round_intersect(round_intersect(np.minimum(band, root), w, 3.0), zb, 2.0)
+
+
 def collar_cut_field(prof, X, Y, Z):
     return prof.Zc(X) - Z + 0.0 * Y
 
@@ -223,6 +263,9 @@ def build_body(prof, log=print):
         sc.add("smooth_subtract", tunnel_feature(prof, spec), p["midsole"]["chamber_fillet"])
     sc.add("smooth_subtract", Feature(lambda X, Y, Z: well_field(prof, X, Y, Z), None, "well"), 2.0)
     sc.add("smooth_subtract", Feature(lambda X, Y, Z: collar_cut_field(prof, X, Y, Z), None, "collar_cut"), 2.5)
+    sc.add("smooth_subtract", Feature(lambda X, Y, Z: foot_cavity_field(prof, X, Y, Z), None, "foot_cavity"), 2.0)
+    sc.add("smooth_subtract", Feature(lambda X, Y, Z: throat_slot_field(prof, X, Y, Z), None, "throat_slot"), 1.0)
+    sc.add("smooth_union", Feature(lambda X, Y, Z: inner_tongue_field(prof, X, Y, Z), None, "tongue_inner"), 0.8)
     tongue, m.tongue_frame = tongue_feature(prof)
     sc.add("smooth_union", tongue, 3.0)
     sc.add("smooth_union", pull_tab_feature(prof), 1.5)
@@ -249,7 +292,7 @@ def build_body(prof, log=print):
             fr = Frame(P[0], n, ex_hint=(1.0, 0.0, 0.0))
             # seat height: highest body point under the dial footprint (+ margin)
             pts = [(0.0, 0.0)]
-            for r in (6.0, 11.0, 15.0, R + 2.5):
+            for r in (6.0, 11.0, 15.0, 19.0, 23.0, 26.5):
                 for a in np.linspace(0, 2 * np.pi, 24, endpoint=False):
                     pts.append((r * np.cos(a), r * np.sin(a)))
             pts = np.array(pts)
@@ -261,10 +304,18 @@ def build_body(prof, log=print):
             t_pt = min(t_pt, dp.get("max_seat_height", 9.0))
             name = ("L" if side > 0 else "R") + str(i + 1)
             m.dials.append(dict(name=name, side=side, index=i, frame=fr, seat=t_pt,
-                                origin=fr.world(0, 0, t_pt + dp["seat_gap"])))
+                                origin=fr.world(0, 0, t_pt + 16.0)))
 
-    # pods (organic mounts) + seat cut + bracket ring + ears + ports + peg
-    pod_r = R + 6.0
+    # ---- dial pods for the printed ratchet mechanism -------------------------
+    # Each pod is a flat seat for the mechanism housing (2 x M2 pilot holes),
+    # cleared above for the knob, with two posts carrying the cable channel
+    # mouths in line with the housing's cable ports.
+    from .mechanism import seat_info
+    si = seat_info(dp)
+    pod_r = si["ear_r"] + si["ear_lobe_r"] + 1.6
+    clear_r = pod_r + 0.5
+    mouth_r = clear_r + 1.2
+    m.seat_info = si
     for d in m.dials:
         fr, t_pt = d["frame"], d["seat"]
         sc.add("smooth_union", frame_feature(
@@ -273,12 +324,14 @@ def build_body(prof, log=print):
     for d in m.dials:
         fr, t_pt = d["frame"], d["seat"]
         sc.add("subtract", frame_feature(
-            fr, lambda lx, ly, lz, t_pt=t_pt: cylinder(lx, ly, lz, R + 0.9, t_pt, t_pt + 14.0, 0.0),
-            R + 16, "seat"))
+            fr, lambda lx, ly, lz, t_pt=t_pt: cylinder(lx, ly, lz, clear_r, t_pt, t_pt + si["stack"] + 3.0, 0.0),
+            clear_r + 26, "seat"))
 
     m.mark_pods = sc.mark()
     targets = p["cables"]["targets_xz"]
-    rc = p["cables"]["diameter"] / 2
+    cp = p["cables"]
+    r_sh, r_bore = cp["sheath_diameter"] / 2, cp["bore_diameter"] / 2
+    lift = cp["bore_center_above_surface"]
     for d in m.dials:
         fr, t_pt = d["frame"], d["seat"]
         tx, tz = targets[d["index"]]
@@ -288,84 +341,107 @@ def build_body(prof, log=print):
         d["target_normal"] = TN[0]
         lx, ly, _ = fr.local(*T[0])
         theta_t = np.arctan2(ly, lx)
-        d["port_angles"] = [theta_t + np.radians(a) for a in (-24.0, 24.0)]
+        d["theta"] = theta_t
+        d["port_angles"] = [theta_t + np.radians(a) * si["port_angle"] / 24.0 for a in (-24.0, 24.0)]
+        zp = t_pt + si["port_z"]
+        d["mouths"] = [fr.world(np.cos(pa) * mouth_r, np.sin(pa) * mouth_r, zp) for pa in d["port_angles"]]
 
-        def bracket(lx, ly, lz, t_pt=t_pt, theta_t=theta_t):
-            rad = np.sqrt(lx * lx + ly * ly)
-            ring = np.maximum(np.maximum(R + 0.9 - rad, rad - (R + 3.6)),
-                              np.maximum(t_pt - 0.5 - lz, lz - (t_pt + 1.6)))
-            out = ring
-            for ea in (theta_t + np.pi - np.radians(55), theta_t + np.pi + np.radians(55)):
-                ca, sa = np.cos(ea), np.sin(ea)
-                ex = lx * ca + ly * sa
-                ey = -lx * sa + ly * ca
-                ear = box(ex - (R + 5.0), ey, lz - (t_pt + 0.55), 4.0, 3.5, 1.05, 1.0)
-                screw = cylinder(ex - (R + 6.0), ey, lz, 1.8, t_pt + 1.0, t_pt + 2.2, 0.5)
-                out = np.minimum(out, np.minimum(ear, screw))
-            peg = cylinder(lx, ly, lz, dp["peg_diameter"] / 2, t_pt - 1.0,
-                           t_pt + dp["seat_gap"] + dp["peg_length"], 0.6)
-            out = np.minimum(out, peg)
-            for pa in (theta_t - np.radians(24), theta_t + np.radians(24)):
-                a = np.array([np.cos(pa) * (R + 2.5), np.sin(pa) * (R + 2.5), t_pt + 1.0])
-                b = np.array([np.cos(pa) * (R + 7.5), np.sin(pa) * (R + 7.5), t_pt + 1.0])
-                port = cylinder_seg(lx, ly, lz, a, b, rc + 0.8)
-                out = np.minimum(out, port)
+        def bracket(lx, ly, lz, t_pt=t_pt, pas=tuple(d["port_angles"]), zp=zp):
+            out = None
+            for pa in pas:
+                a = np.array([np.cos(pa) * (mouth_r + 1.0), np.sin(pa) * (mouth_r + 1.0), t_pt - 4.0])
+                b = np.array([np.cos(pa) * (mouth_r + 1.0), np.sin(pa) * (mouth_r + 1.0), zp])
+                post = cylinder_seg(lx, ly, lz, a, b, r_sh + 1.2)
+                out = post if out is None else np.minimum(out, post)
             return out
 
-        sc.add("smooth_union", frame_feature(fr, bracket, R + 16, "bracket"), 0.5)
+        sc.add("smooth_union", frame_feature(fr, bracket, clear_r + 16, "bracket"), 1.0)
+        # housing screw pilot holes (ears opposite the ports)
+        for ex_, ey_ in si["ears"]:
+            ca, sa = np.cos(theta_t), np.sin(theta_t)
+            hx, hy = ex_ * ca - ey_ * sa, ex_ * sa + ey_ * ca
+            sc.add("subtract", frame_feature(
+                fr, lambda lx, ly, lz, hx=hx, hy=hy, t_pt=t_pt: cylinder(
+                    lx - hx, ly - hy, lz, si["screw_pilot_d"] / 2, t_pt - 7.0, t_pt + 1.0, 0.0),
+                clear_r + 16, "pilot"))
     m.mark_brackets = sc.mark()
-    log("body: dials, pods and brackets placed; routing cables")
+    log("body: dial pods and channel posts placed; routing cable channels")
 
-    # ---- cables ------------------------------------------------------------
+    # ---- cable channels ------------------------------------------------------
+    # Each dial pulls one loop of 1 mm braided line: housing port A -> channel
+    # -> U-turn guide at the target -> channel -> housing port B.
     m.cables = []
+    m.bores = []
     m.hardware = []
     upto = m.mark_brackets
     for d in m.dials:
         fr, t_pt, side = d["frame"], d["seat"], d["side"]
-        T = d["target"]
+        T, TN = d["target"], unit(d["target_normal"])
         strands = []
-        for pa in d["port_angles"]:
-            P0 = fr.world(np.cos(pa) * (R + 7.5), np.sin(pa) * (R + 7.5), t_pt + 1.0)
+        for P0 in d["mouths"]:
             dist = np.hypot(T[0] - P0[0], T[2] - P0[2])
-            s = np.linspace(0.0, 1.0, max(6, int(dist / 2.0)))
-            xz = np.c_[P0[0] + (T[0] - P0[0]) * s, P0[2] + (T[2] - P0[2]) * s]
+            s_ = np.linspace(0.0, 1.0, max(6, int(dist / 2.0)))
+            xz = np.c_[P0[0] + (T[0] - P0[0]) * s_, P0[2] + (T[2] - P0[2]) * s_]
             S, SN, ok = project_side(sc, upto, prof, xz, side)
             lx, ly, _ = fr.local(S[:, 0], S[:, 1], S[:, 2])
-            keep = ok & (np.hypot(lx, ly) > R + 9.0)
+            keep = ok & (np.hypot(lx, ly) > mouth_r + 5.0)
+            keep &= np.linalg.norm(S - T, axis=1) > 7.0
             S = S[keep]
             if len(S) >= 3:
                 Sm = S.copy()
                 Sm[1:-1] = (S[:-2] + 2 * S[1:-1] + S[2:]) / 4.0
-                S = project(sc, Sm, offset=rc - 0.35, upto=upto, iters=3)
-            pts = np.vstack([P0, S, T + d["target_normal"] * (rc - 0.35)])
-            strands.append(pts)
-            sc.add("smooth_union", CapsuleChain(pts, rc, "cable"), 0.4)
-            m.cables.append(pts)
-        d["strands"] = strands
+                S = project(sc, Sm, offset=lift, upto=upto, iters=3)
+            strands.append(np.vstack([P0, S]))
+        # U-turn at the target, in the surface tangent plane
+        approach = np.mean([T - st[-1] for st in strands], axis=0)
+        u = unit(approach - np.dot(approach, TN) * TN)
+        v = unit(np.cross(TN, u))
+        C = T + TN * lift
+        rho = cp["uturn_radius"]
+        if np.dot(strands[0][-1] - C, v) > np.dot(strands[1][-1] - C, v):
+            strands = strands[::-1]                   # strand 0 on the -v side
+        phi = np.linspace(0.0, np.pi, 13)
+        arc = C[None, :] + rho * (-np.cos(phi)[:, None] * v + np.sin(phi)[:, None] * u)
+        loop = np.vstack([strands[0], arc, strands[1][::-1]])
+        d["strands"] = [np.vstack([strands[0], arc[:7]]), np.vstack([strands[1], arc[::-1][:7]])]
+        d["loop"] = loop
+        sc.add("smooth_union", CapsuleChain(loop, r_sh, "cable"), 0.6)
+        m.cables.extend(d["strands"])
+        m.bores.append(loop)
+        # U-turn guide boss
+        gfr = Frame(T, TN, ex_hint=u)
+        sc.add("smooth_union", frame_feature(
+            gfr, lambda lx, ly, lz, rho=rho: box(lx - rho * 0.35, ly, lz - lift * 0.6,
+                                                 rho + 2.4, rho + 3.4, lift * 0.6 + 2.0, 1.6),
+            rho + 10, "anchor"), 1.0)
+        m.hardware.append(("anchor", gfr))
     m.mark_cables = sc.mark()
 
-    # guides (molded sleeves) and anchor posts
+    # mid-span guide sleeves (cosmetic clips over the channel)
     for d in m.dials:
         for pts in d["strands"]:
-            if len(pts) < 5:
+            if len(pts) < 9:
                 continue
-            for frac in (0.45,):
-                i = int(len(pts) * frac)
-                c = pts[i]
-                tan = pts[i + 1] - pts[i - 1]
-                nn = normals(sc, c[None, :], m.mark_brackets)[0]
-                gfr = Frame(c, nn, ex_hint=tan)
-                sc.add("smooth_union", frame_feature(
-                    gfr, lambda lx, ly, lz: box(lx, ly, lz - 0.2, 3.2, 2.3, 1.45, 0.7), 8, "guide"), 0.5)
-                m.hardware.append(("guide", gfr))
-        T, TN = d["target"], d["target_normal"]
-        afr = Frame(T, TN)
-        sc.add("smooth_union", frame_feature(
-            afr, lambda lx, ly, lz: np.minimum(cylinder(lx, ly, lz, 4.6, -1.5, 1.4, 0.8),
-                                               cylinder(lx, ly, lz, 2.1, 0.0, 3.2, 0.7)), 10, "anchor"), 0.8)
-        m.hardware.append(("anchor", afr))
+            i = int(len(pts) * 0.45)
+            c = pts[i]
+            tan = pts[i + 1] - pts[i - 1]
+            nn = normals(sc, (c - unit(normals(sc, c[None, :], m.mark_brackets)[0]) * lift)[None, :],
+                         m.mark_brackets)[0]
+            gfr = Frame(c, nn, ex_hint=tan)
+            sc.add("smooth_union", frame_feature(
+                gfr, lambda lx, ly, lz: box(lx, ly, lz, 3.2, r_sh + 1.0, r_sh + 0.6, 0.7), 8, "guide"), 0.5)
+            m.hardware.append(("guide", gfr))
+    # finally open the bores through sheaths, guides, U-turns and mouths
+    for d, loop in zip(m.dials, m.bores):
+        fr = d["frame"]
+        ext = [fr.world(np.cos(pa) * (mouth_r - 3.0), np.sin(pa) * (mouth_r - 3.0), d["seat"] + si["port_z"])
+               for pa in d["port_angles"]]
+        if np.linalg.norm(ext[0] - loop[0]) > np.linalg.norm(ext[1] - loop[0]):
+            ext = ext[::-1]
+        path = np.vstack([ext[0], loop, ext[1]])
+        sc.add("subtract", CapsuleChain(path, r_bore, "bore"))
     m.mark_guides = sc.mark()
-    log("body: cables, guides and anchors added; placing eyelets")
+    log("body: cable channels, U-turn guides and bores added; placing eyelets")
 
     # ---- eyelets -------------------------------------------------------------
     lp = p["laces"]
@@ -436,6 +512,7 @@ def body_labels(m, P):
 
     groups = {"pod": 5, "bracket": 5, "cable": 6, "guide": 7, "anchor": 7, "eyelet": 8,
               "pull_tab": 7}
+    lab[inner_tongue_field(prof, X, Y, Z) < 0.4] = 4
     for kind, f, k in m.scene.ops:
         g = groups.get(f.name)
         if g is None:

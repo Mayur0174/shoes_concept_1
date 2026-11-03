@@ -1,6 +1,6 @@
 # Soletta dual-dial trail shoe: parametric CAD
 
-A parametric CAD reconstruction of the Soletta technical trail shoe concept. It has an organic midsole with three through-chambers, a chevron-lug outsole and three rotary dials on each side (six in total) with routed 1.5 mm tension cables. It also has a toe cap, heel counter with pull tab, padded collar, tongue, lace panel, 6+6 eyelets and real 4.5 mm round laces tied in a bow.
+A parametric CAD reconstruction of the Soletta technical trail shoe concept. It has an organic midsole with three through-chambers, a chevron-lug outsole and three **working, printable ratchet dials** on each side (six in total). Each dial winds a loop of real 1 mm line through hollow channels in the upper. It also has a toe cap, heel counter with pull tab, padded collar, a hollow foot cavity, an open lacing throat over a separate tongue, and 6+6 eyelets for real laces.
 
 All the code runs on GitHub Actions, so nothing needs to be installed locally. Every push builds the model, and each run:
 
@@ -17,23 +17,55 @@ You can also start a build by hand from the **Actions → build-cad → Run work
 
 | Part | Technique | Files |
 |---|---|---|
-| Main body (midsole, upper, wraps, tongue, collar, heel counter, pods, brackets, cables, guides, anchors, eyelets) | Signed-distance CSG with smooth (G2-like) blends, meshed by marching cubes | `components/body*.stl`, `step/body.step` (faceted) |
+| Main body (midsole, upper, foot cavity, throat slot, inner tongue, collar, heel counter, dial pods, hollow cable channels, U-turn guides, eyelets) | Signed-distance CSG with smooth (G2-like) blends, meshed by marching cubes | `components/body*.stl`, `step/body.step` (faceted) |
 | Outsole | Same SDF method: perimeter block lugs, pods with chevrons, cross-hatch floor, shank diamond, midfoot web | `components/outsole*.stl`, `step/outsole.step` |
-| Laces | Tubes draped over the finished surface, over/under crossings, bow with aglets | `components/lace_assembly*.stl`, `step/lace_assembly.step` |
-| Dials (x6) | Exact B-rep in CadQuery: knurled ring, centre cap, hex drive, notch, grooves, snap socket | `components/dial_*.stl`, `step/dial_single_exact_brep.step` |
+| Laces (display only) | Tubes draped over the finished surface, over/under crossings, bow with aglets. Used for renders; lace the real shoe with real laces | `components/lace_assembly*.stl` |
+| Dial mechanism (x6) | Exact B-rep in CadQuery: housing (ratchet teeth, snap axle, cable ports), spool (compliant pawls, cable groove, knot pockets, hex key), knob | `components/dial_{housing,spool,knob}.stl`, `step/dial_*_exact_brep.step` |
 
 All the shapes are real geometry, not textures. The SDF approach guarantees the organic parts are watertight and manifold, with filleted transitions.
 
-`step/soletta_assembly.step` is a named, coloured assembly that imports into Fusion 360. The dials are exact B-rep solids there. The organic bodies are faceted B-rep solids, which you can edit as solids in Fusion or convert with *Mesh → Convert*. To change their shape parametrically, edit `params.json` instead.
+`step/soletta_assembly.step` is a named, coloured assembly that imports into Fusion 360. The dial parts are exact B-rep solids there. The organic bodies are faceted B-rep solids, which you can edit as solids in Fusion or convert with *Mesh → Convert*. To change their shape parametrically, edit `params.json` instead.
 
 ## 3D printing
 
 `printable/` contains:
 
 * `shoe_body_with_outsole.stl` / `.3mf`: one watertight piece; print it upright on the outsole
-* `dials_x6_plate.stl`: print bottom face down; they press onto the 6 mm bracket pegs (0.15 mm clearance)
-* `laces_print_flexible.stl`: print in TPU
+* `dial_kit_x3_plate_A.stl`, `dial_kit_x3_plate_B.stl`: 3 housings, 3 spools and 3 knobs each, already in print orientation
+* `dial_housing_single.stl`, `dial_spool_single.stl`, `dial_knob_single.stl`: one of each, for a test print
 
-Recommended settings: 0.2 mm layers, 3 walls, tree supports for the midsole chamber roofs and toe-box overhangs, and TPU 95A for the outsole if you want it flexible. At full size (290 mm long) you need a bed of at least 300 mm. Otherwise scale `length`, `max_width` and `height` in `params.json` (or scale in the slicer).
+### Shoe body
 
-The build report lists for every part: watertightness, winding, body count, volume, overhang share and sampled wall thickness.
+Print it in **TPU 95A** so it flexes on the foot and the cable tension can pull the upper in. Use 0.2 mm layers, 3 walls, 15–20 % gyroid infill, and tree supports for the midsole chamber roofs and the inside of the toe box (remove them through the throat). At full size (290 mm long) you need a bed of at least 300 mm. Otherwise scale `length`, `max_width` and `height` in `params.json`.
+
+### Dial mechanism (per dial: housing + spool + knob)
+
+Print in **PETG** (PLA+ works) at 0.12–0.16 mm layers, 100 % infill, **no supports**:
+
+* housing: flange down
+* spool: pawls down (the three thin arms must print flat on the bed so they flex)
+* knob: knurled face down
+
+Print one set first and check the fit. The spool should turn freely on the axle, and the axle ridge should click into both detent grooves. If it is too tight, raise `dials.mechanism.clearance` in `params.json` (default 0.2 mm); if the pawls slip, raise `pawl_tip_r`.
+
+### What else you need
+
+* 6 lengths of **1.0 mm braided line** (Dyneema/PE fishing line, 30–50 kg), about 200 mm each
+* 12 **M2 × 6 mm self-tapping screws** (2 per housing)
+* a drop of **CA glue** per knob
+* a pair of normal **flat laces** (about 120 cm) for the eyelets
+
+### Assembly (per dial)
+
+1. Screw the housing onto its pod with the two cable ports facing the channel mouths.
+2. Thread the line into one channel mouth, through the channel and around the U-turn guide at the far end, and back out of the other mouth.
+3. Pass both ends through the housing's cable ports. Push each end into a radial hole in the spool groove, pull it out through the knot pocket on the underside, tie a stopper knot and pull it back.
+4. Push the spool down onto the axle until it clicks twice, then glue the knob onto the hex key.
+
+### Use
+
+* **Tighten:** push the knob down and turn it **clockwise**. It clicks 24 times per turn and holds.
+* **Release:** pull the knob up about 3 mm until it clicks. The spool then spins free and you can slip the shoe off.
+* The laces close the throat over the tongue. The dials then cinch the forefoot, midfoot and heel collar.
+
+The build report lists for every part: watertightness, winding, body count, volume, overhang share and sampled wall thickness, plus the dial mechanism's interference checks (engaged, turning and released).

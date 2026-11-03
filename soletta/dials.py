@@ -1,50 +1,12 @@
-"""Rotary tension dials as true B-rep solids (CadQuery): knurled grip ring,
-recessed centre cap with hex drive and position notch, radial top grooves,
-snap socket for the bracket peg and an underside relief."""
+"""Place the printed ratchet dial mechanism (housing + spool + knob, see
+mechanism.py) on each dial pod of the shoe body."""
 import numpy as np
-import cadquery as cq
 from OCP.gp import gp_Trsf, gp_Ax3, gp_Pnt, gp_Dir
 from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform
+import cadquery as cq
 
-
-def make_dial(dp):
-    R = dp["diameter"] / 2
-    T = dp["thickness"]
-    n_fl = dp["knurl_count"]
-    sock_r = dp["peg_diameter"] / 2 + dp["peg_clearance"]
-    sock_d = dp["socket_depth"]
-
-    dial = cq.Workplane("XY").circle(R).extrude(T)
-    dial = dial.faces(">Z").edges().chamfer(1.2)
-    dial = dial.faces("<Z").edges().fillet(0.6)
-
-    # fine radial knurling on the grip ring
-    flutes = (cq.Workplane("XY").workplane(offset=1.0)
-              .polarArray(R + 0.15, 0, 360, n_fl).circle(0.55).extrude(T - 2.6))
-    dial = dial.cut(flutes)
-
-    # centre cap seated in a recess with a 0.3 mm shadow gap
-    cap_r = dp["cap_diameter"] / 2
-    dial = dial.cut(cq.Workplane("XY").workplane(offset=T - 1.0).circle(cap_r + 0.3).extrude(1.5))
-    cap = cq.Workplane("XY").workplane(offset=T - 1.0).circle(cap_r).extrude(1.0)
-    cap = cap.faces(">Z").edges().fillet(0.6)
-    dial = dial.union(cap)
-    dial = dial.cut(cq.Workplane("XY").workplane(offset=T - 0.7).polygon(6, 4.4).extrude(1.0))
-    dial = dial.cut(cq.Workplane("XY").workplane(offset=T - 0.5)
-                    .center(cap_r * 0.55, 0).rect(cap_r * 0.55, 1.0).extrude(1.0))
-
-    # radial grip grooves on the top ring
-    ring_mid = (cap_r + 0.3 + R - 1.2) / 2
-    grooves = (cq.Workplane("XY").workplane(offset=T - 0.5)
-               .polarArray(ring_mid, 0, 360, dp["top_groove_count"])
-               .rect(R - 1.2 - cap_r - 1.4, 0.9).extrude(1.0))
-    dial = dial.cut(grooves)
-
-    # underside: peg socket with lead-in chamfer + relief ring
-    dial = dial.cut(cq.Workplane("XY").circle(sock_r).extrude(sock_d))
-    dial = dial.cut(cq.Workplane("XY").circle(sock_r + 0.5).workplane(offset=0.5).circle(sock_r).loft())
-    dial = dial.cut(cq.Workplane("XY").circle(R - 3.0).circle(sock_r + 2.5).extrude(1.0))
-    return dial.val()
+from .mechanism import make_housing, make_spool, make_knob, check_mechanism
+from .sdf import Frame
 
 
 def place(shape, origin, ez, ex):
@@ -57,14 +19,25 @@ def place(shape, origin, ez, ex):
 
 def build_dials(m, log=print):
     dp = m.prof.p["dials"]
-    base = make_dial(dp)
+    housing = make_housing(dp)
+    spool = make_spool(dp)
+    knob = make_knob(dp)
+    checks = check_mechanism(housing, spool, knob, dp)
+    log("dials: housing %.0f, spool %.0f, knob %.0f mm^3; checks %s"
+        % (housing.Volume(), spool.Volume(), knob.Volume(), checks))
     out = []
     for d in m.dials:
         fr = d["frame"]
-        placed = place(base, d["origin"], fr.ez, fr.ex)
-        out.append(dict(name=d["name"], side=d["side"], shape=placed, frame=fr, origin=d["origin"]))
-    log("dials: %d B-rep dials, volume each %.0f mm^3" % (len(out), base.Volume()))
-    return base, out
+        th = d["theta"]
+        ex = np.cos(th) * fr.ex + np.sin(th) * fr.ey      # housing +x -> cable ports
+        o = fr.world(0, 0, d["seat"])
+        hfr = Frame(o, fr.ez, ex_hint=ex)
+        out.append(dict(name=d["name"], side=d["side"], frame=hfr, origin=o,
+                        housing=place(housing, o, fr.ez, hfr.ex),
+                        spool=place(spool, o, fr.ez, hfr.ex),
+                        knob=place(knob, o, fr.ez, hfr.ex)))
+    kit = dict(housing=housing, spool=spool, knob=knob, checks=checks)
+    return kit, out
 
 
 def tessellate(shape, tol=0.02, ang=0.15):
