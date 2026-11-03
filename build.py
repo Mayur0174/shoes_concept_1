@@ -45,14 +45,19 @@ def optional(label):
     return deco
 
 
-def grid_mesh(scene, lo, hi, h, name):
+def grid_mesh(scene, lo, hi, h, name, keep_all=False):
     axes = M.domain_axes(lo, hi, h)
     log(f"{name}: evaluating SDF on {len(axes[0])}x{len(axes[1])}x{len(axes[2])} grid @ {h} mm")
     V = scene.grid(*axes, log=log)
     log(f"{name}: marching cubes")
     mesh = M.mesh_from_volume(V, axes, 1)
     del V
-    mesh, dropped = M.keep_largest(mesh)
+    if keep_all:
+        parts = [q for q in mesh.split(only_watertight=False) if abs(q.volume) > 50.0]
+        dropped = len(mesh.split(only_watertight=False)) - len(parts)
+        mesh = trimesh.util.concatenate(parts)
+    else:
+        mesh, dropped = M.keep_largest(mesh)
     if dropped:
         WARN.append(f"{name}: removed {dropped} floating fragment(s)")
     log(f"{name}: {len(mesh.faces)} triangles, watertight={mesh.is_watertight}")
@@ -109,6 +114,10 @@ def main():
     log("profiles + planform maps ready")
     model = build_body(prof, log)
     lace_sc = build_laces(model, log)
+    strap_sc = None
+    if model.straps:
+        from soletta.straps import build_strap_display, strap_strip_lengths
+        strap_sc = build_strap_display(model, prof)
     outsole_sc = build_outsole(prof)
 
     from soletta.dials import build_dials, tessellate
@@ -128,6 +137,9 @@ def main():
     outsole = grid_mesh(outsole_sc, (-6, y_lo + 10, -2.0), (L + 6, y_hi - 10, z_hi_out),
                         res["outsole"], "outsole")
     laces = grid_mesh(lace_sc, lace_sc.domain[0], lace_sc.domain[1], res["laces"], "laces")
+    webbing = None
+    if strap_sc is not None:
+        webbing = grid_mesh(strap_sc, strap_sc.domain[0], strap_sc.domain[1], res["laces"], "webbing", keep_all=True)
 
     deb = deboss_logo(body, prof)
     if deb is not None and deb.is_watertight:
@@ -154,6 +166,8 @@ def main():
     report["components"].append(M.validate("body", body, wall_stats=ws))
     report["components"].append(M.validate("outsole", outsole))
     report["components"].append(M.validate("laces", laces))
+    if webbing is not None:
+        report["components"].append(M.validate("medial straps as fitted (display)", webbing))
     for k in ("housing", "spool", "knob"):
         report["components"].append(M.validate(f"dial {k} (each)", local[k]))
     report["mechanism"] = kit["checks"]
@@ -181,6 +195,8 @@ def main():
     body.export(os.path.join(comp, "body_hires.stl"))
     outsole.export(os.path.join(comp, "outsole_hires.stl"))
     laces.export(os.path.join(comp, "lace_assembly_hires.stl"))
+    if webbing is not None:
+        webbing.export(os.path.join(comp, "medial_straps_as_fitted_display.stl"))
     body_p.export(os.path.join(comp, "body.stl"))
     outsole_p.export(os.path.join(comp, "outsole.stl"))
     laces_p.export(os.path.join(comp, "lace_assembly.stl"))
@@ -203,19 +219,31 @@ def main():
         oriented[k] = t
         t.export(os.path.join(prn, f"dial_{k}_single.stl"))
     pitch = 50.0
-    plate = []
-    for i in range(6):
-        for j, k in enumerate(("housing", "spool", "knob")):
-            t = oriented[k].copy()
-            t.apply_translation([j * pitch, i * pitch, 0])
-            plate.append(t)
-    trimesh.util.concatenate(plate[:9]).export(os.path.join(prn, "dial_kit_x3_plate_A.stl"))
-    trimesh.util.concatenate(plate[9:]).export(os.path.join(prn, "dial_kit_x3_plate_B.stl"))
+    nd = len(dials)
+    for c0 in range(0, nd, 3):
+        plate = []
+        for i in range(min(3, nd - c0)):
+            for j, k in enumerate(("housing", "spool", "knob")):
+                t = oriented[k].copy()
+                t.apply_translation([j * pitch, i * pitch, 0])
+                plate.append(t)
+        tag = "" if nd <= 3 else "_" + "AB"[c0 // 3]
+        trimesh.util.concatenate(plate).export(os.path.join(prn, f"dial_kit_x{len(plate) // 3}_plate{tag}.stl"))
+    if model.straps:
+        # printable TPU straps (or use 15 mm nylon webbing of the same lengths)
+        sp = params["medial"]
+        strips = []
+        for i, L in enumerate(strap_strip_lengths(model, prof)):
+            st = trimesh.creation.box(extents=[L, sp["webbing_width"], sp["webbing_thickness"]])
+            st.apply_translation([L / 2, i * (sp["webbing_width"] + 6), sp["webbing_thickness"] / 2])
+            strips.append(st)
+            report.setdefault("strap_lengths_mm", []).append(L)
+        trimesh.util.concatenate(strips).export(os.path.join(prn, "medial_straps_tpu_x%d.stl" % len(strips)))
     export_3mf(merged, os.path.join(prn, "shoe_body_with_outsole.3mf"))
 
-    hi_parts = [body, outsole, laces] + [tm for _, _, tm in dial_meshes]
+    hi_parts = [body, outsole, laces] + ([webbing] if webbing is not None else []) + [tm for _, _, tm in dial_meshes]
     trimesh.util.concatenate(hi_parts).export(os.path.join(out, "assembly", "soletta_assembly_hires.stl"))
-    pr_parts = [body_p, outsole_p, laces_p] + [tm for _, _, tm in dial_meshes]
+    pr_parts = [body_p, outsole_p, laces_p] + ([webbing] if webbing is not None else []) + [tm for _, _, tm in dial_meshes]
     trimesh.util.concatenate(pr_parts).export(os.path.join(out, "assembly", "soletta_assembly.stl"))
 
     # colours
@@ -231,14 +259,21 @@ def main():
     color_parts = [(np.asarray(body_p.vertices), np.asarray(body_p.faces), body_C),
                    (np.asarray(outsole_p.vertices), np.asarray(outsole_p.faces), outsole_C),
                    (np.asarray(laces_p.vertices), np.asarray(laces_p.faces), laces_C)] + dial_parts
+    if webbing is not None:
+        color_parts.append((np.asarray(webbing.vertices), np.asarray(webbing.faces),
+                            RD.solid_colors(len(webbing.vertices), "#3d4044")))
     export_glb(color_parts, os.path.join(out, "assembly", "soletta_assembly_color.glb"))
 
     # ---------------------------------------------------------------- renders
     dial_info = {d["name"]: (d["origin"], d["frame"].ez) for d in model.dials}
+    if model.straps:
+        st = model.straps[1]
+        mid = 0.65 * st["bottom"] + 0.35 * st["top"]
+        dial_info["S2"] = (mid, st["bottom_n"])
     views = render(color_parts, dial_info)
     if views:
         RD.contact_sheet(views, "renders/contact_sheet.png",
-                         "Soletta dual-dial trail shoe  |  CAD reconstruction  |  %s quality" % quality)
+                         "Soletta trail shoe  |  dial side + strap side  |  %s quality" % quality)
         render_parts(outsole_p, outsole_C)
     mech_sheet(local["housing"], local["spool"], local["knob"])
 
@@ -335,8 +370,20 @@ def function_checks(model, prof):
         t = zs[np.flatnonzero(np.diff(ins.astype(int)))]
         gaps.append(float(t[2] - t[1]) if len(t) >= 4 else 0.0)
     out["tongue gap under the quarters, min mm"] = round(min(gaps), 2)
+    if model.straps:
+        sp = prof.p["medial"]
+        g, t, bar, w = sp["webbing_gap"], sp["frame_thickness"], sp["bar_width"], sp["slot_width"]
+        for st in model.straps:
+            fr = st["buckle_frame"]
+            c = bar / 2 + w / 2
+            P = np.array([fr.world(u, v, wz) for u in (-c, c) for v in (-6.0, 0.0, 6.0) for wz in (g / 2, g + t / 2)]
+                         + [fr.world(0.0, v, g / 2) for v in (-6.0, 0.0, 6.0)])
+            out[f"strap {st['index'] + 1} buckle slots + webbing gap clear, min mm"] = round(float(sc.points(P).min()), 2)
+            fr = st["loop_frame"]
+            P = np.array([fr.world(0.0, v, wz) for v in (-6.0, 0.0, 6.0) for wz in (g / 2, g + t / 2)])
+            out[f"strap {st['index'] + 1} top loop clear, min mm"] = round(float(sc.points(P).min()), 2)
     for k, v in out.items():
-        if ("open" in k and v < 0.6) or (k.startswith("tongue") and v < 0.5):
+        if ("open" in k and v < 0.6) or (k.startswith("tongue") and v < 0.5) or (" clear" in k and v < 0.5):
             WARN.append(f"function check failed: {k} = {v}")
     return out
 

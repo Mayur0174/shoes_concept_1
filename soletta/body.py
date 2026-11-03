@@ -278,7 +278,9 @@ def build_body(prof, log=print):
     dp = p["dials"]
     R = dp["diameter"] / 2
     m.dials = []
-    for side in (+1, -1):
+    straps_medial = p.get("medial", {}).get("system") == "straps"
+    dial_sides = (+1,) if straps_medial else (+1, -1)
+    for side in dial_sides:
         for i, (x, z) in enumerate(dp["positions_xz"]):
             x, z = x * sx, z * sz
             P, N, hit = project_side(sc, m.mark_base, prof, [[x, z]], side)
@@ -438,6 +440,10 @@ def build_body(prof, log=print):
             sc.add("smooth_union", StrapChain(S, SN, cp["strap_width"] * 0.85, cp["strap_thickness"] * 0.7,
                                               "cable"), 0.6)
     m.mark_cables = sc.mark()
+    m.straps = []
+    if straps_medial:
+        from .straps import add_strap_hardware
+        add_strap_hardware(m, sc, prof, sc.mark(), log)
 
     # mid-span guide sleeves (cosmetic clips over the channel)
     for d in m.dials:
@@ -535,7 +541,7 @@ def body_labels(m, P):
     lab[tongue_f.points(P, 1.0) < 0.4] = 4
     lab[(grey < eps) & (lab != 3)] = 1
 
-    groups = {"pod": 5, "bracket": 5, "cable": 6, "guide": 7, "anchor": 7, "eyelet": 8,
+    groups = {"pod": 5, "bracket": 5, "cable": 6, "guide": 7, "anchor": 7, "eyelet": 8, "buckle": 7,
               "pull_tab": 7}
     lab[inner_tongue_field(prof, X, Y, Z) < 0.4] = 4
     for kind, f, k in m.scene.ops:

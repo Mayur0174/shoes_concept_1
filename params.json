@@ -187,5 +187,27 @@
   },
   "validation": {
     "wall_samples": 4000
+  },
+  "medial": {
+    "system": "straps",
+    "side": -1,
+    "strap_x": [
+      62.0,
+      128.0,
+      194.0
+    ],
+    "webbing_width": 15.0,
+    "webbing_thickness": 1.6,
+    "webbing_gap": 2.6,
+    "frame_thickness": 2.6,
+    "post_width": 2.6,
+    "bar_width": 3.2,
+    "slot_width": 3.4,
+    "buckle_z_offset": -3.0,
+    "top_loop_outset": 4.0,
+    "collar_drop": 16.0,
+    "fold_allowance": 50.0,
+    "tail_length": 14.0,
+    "panel_drop": 7.0
   }
 }

@@ -64,8 +64,8 @@ def dial_colors(V, frame, origin, kind):
 
 VIEWS = {
     # name: (camera direction from target, up vector, label)
-    "left": ((0, 1, 0), (0, 0, 1), "Left Side (Dial Side A)"),
-    "right": ((0, -1, 0), (0, 0, 1), "Right Side (Dial Side B)"),
+    "left": ((0, 1, 0), (0, 0, 1), "Left Side (Dial Tension Side)"),
+    "right": ((0, -1, 0), (0, 0, 1), "Right Side (Strap Side)"),
     "top": ((0, 0, 1), (0, -1, 0), "Top View"),
     "bottom": ((0, 0, -1), (0, 1, 0), "Bottom View"),
     "front": ((1, 0, 0), (0, 0, 1), "Front View"),
@@ -119,7 +119,8 @@ def render_all(parts, outdir, dial_info, log=print):
         pl.screenshot(path)
         out[name] = (path, label)
     # dial close-ups (one per side, front dial)
-    for key, label in (("L1", "Dial Tension Mechanism (Side A)"), ("R1", "Dial Tension Mechanism (Side B)")):
+    for key, label in (("L1", "Dial Tension Mechanism (Exterior Side)"), ("R1", "Dial Tension Mechanism (Side B)"),
+                       ("S2", "Strap System (Interior Side)")):
         info = dial_info.get(key)
         if info is None:
             continue
@@ -128,7 +129,7 @@ def render_all(parts, outdir, dial_info, log=print):
         cam.focal_point = o
         cam.position = o + n * 600 + np.array([0, 0, 120.0])
         cam.up = (0, 0, 1)
-        cam.parallel_scale = 32
+        cam.parallel_scale = 46 if key == "S2" else 32
         pl.reset_camera_clipping_range()
         pl.render()
         path = os.path.join(outdir, f"view_dial_{key}.png")
@@ -187,7 +188,7 @@ def contact_sheet(views, path, title):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import matplotlib.image as mpimg
-    layout = [["left", "right"], ["top", "bottom"], ["front", "rear", "dial_L1", "dial_R1"]]
+    layout = [["left", "right"], ["top", "bottom"], ["front", "rear", "dial_L1", "dial_R1" if "dial_R1" in views else "dial_S2"]]
     fig = plt.figure(figsize=(16, 13), dpi=110)
     fig.patch.set_facecolor("#f3f3f3")
     gs = fig.add_gridspec(3, 4, height_ratios=[1.0, 1.0, 0.9], hspace=0.12, wspace=0.04)
