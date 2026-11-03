@@ -215,6 +215,67 @@ class CapsuleChain(Feature):
         return out
 
 
+class StrapChain(Feature):
+    """Flat webbing strap along a polyline lying on a surface: each segment is
+    a rounded box (length x width x thickness) oriented by the segment
+    tangent and the surface normal at that segment."""
+
+    def __init__(self, pts, nrm, width, thick, name="", round_r=None):
+        pts = np.asarray(pts, float)
+        nrm = np.asarray(nrm, float)
+        self.segs = []
+        hw, ht = width / 2.0, thick / 2.0
+        rr = min(ht, 1.0) if round_r is None else round_r
+        for i in range(len(pts) - 1):
+            a, b = pts[i], pts[i + 1]
+            t = b - a
+            L = float(np.linalg.norm(t))
+            if L < 1e-6:
+                continue
+            t /= L
+            n = 0.5 * (nrm[i] + nrm[i + 1])
+            n = n - np.dot(n, t) * t
+            n /= max(np.linalg.norm(n), 1e-9)
+            w = np.cross(n, t)
+            self.segs.append(((a + b) / 2, t, w, n, L / 2 + hw * 0.35, hw, ht, rr))
+        ext = hw + ht + 1.0
+        super().__init__(None, (pts.min(0) - ext, pts.max(0) + ext), name)
+
+    def _seg_d(self, X, Y, Z, s):
+        c, t, w, n, hl, hw, ht, rr = s
+        dx, dy, dz = X - c[0], Y - c[1], Z - c[2]
+        u = dx * t[0] + dy * t[1] + dz * t[2]
+        v = dx * w[0] + dy * w[1] + dz * w[2]
+        h = dx * n[0] + dy * n[1] + dz * n[2]
+        return box(u, v, h, hl, hw, ht, rr)
+
+    def grid(self, xs, ys, zs, pad):
+        out = np.full((len(xs), len(ys), len(zs)), pad, np.float32)
+        for s in self.segs:
+            r = s[4] + s[5] + s[6]
+            lo, hi = s[0] - r - pad, s[0] + r + pad
+            i0, i1 = _slices(xs, lo[0], hi[0])
+            j0, j1 = _slices(ys, lo[1], hi[1])
+            k0, k1 = _slices(zs, lo[2], hi[2])
+            if i1 <= i0 or j1 <= j0 or k1 <= k0:
+                continue
+            d = self._seg_d(xs[i0:i1, None, None], ys[None, j0:j1, None], zs[None, None, k0:k1], s)
+            sub = out[i0:i1, j0:j1, k0:k1]
+            np.minimum(sub, d, out=sub)
+        return out
+
+    def points(self, P, pad):
+        out = np.full(len(P), pad, float)
+        for s in self.segs:
+            r = s[4] + s[5] + s[6]
+            m = np.all((P >= s[0] - r - pad) & (P <= s[0] + r + pad), axis=1)
+            if not m.any():
+                continue
+            idx = np.nonzero(m)[0]
+            out[idx] = np.minimum(out[idx], self._seg_d(P[idx, 0], P[idx, 1], P[idx, 2], s))
+        return out
+
+
 def _slices(axis, lo, hi):
     return int(np.searchsorted(axis, lo, "left")), int(np.searchsorted(axis, hi, "right"))
 

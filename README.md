@@ -1,6 +1,6 @@
 # Soletta dual-dial trail shoe: parametric CAD
 
-A parametric CAD reconstruction of the Soletta technical trail shoe concept. It has an organic midsole with three through-chambers, a chevron-lug outsole and three **working, printable ratchet dials** on each side (six in total). Each dial winds a loop of real 1 mm line through hollow channels in the upper. It also has a toe cap, heel counter with pull tab, padded collar, a hollow foot cavity, an open lacing throat over a separate tongue, and 6+6 eyelets for real laces.
+A parametric CAD reconstruction of the Soletta technical trail shoe concept. It has an organic midsole with three through-chambers, a chevron-lug outsole and three **working, printable ratchet dials** on each side (six in total). Each dial winds a loop of real 1 mm line through a channel inside a moulded webbing strap that runs up to the lace panel or collar, as in the reference sheet. It also has a toe cap, heel counter with pull tab, padded collar, a hollow foot cavity, an open lacing throat over a separate tongue, and 6+6 eyelets for real laces.
 
 All the code runs on GitHub Actions, so nothing needs to be installed locally. Every push builds the model, and each run:
 
@@ -17,7 +17,7 @@ You can also start a build by hand from the **Actions → build-cad → Run work
 
 | Part | Technique | Files |
 |---|---|---|
-| Main body (midsole, upper, foot cavity, throat slot, inner tongue, collar, heel counter, dial pods, hollow cable channels, U-turn guides, eyelets) | Signed-distance CSG with smooth (G2-like) blends, meshed by marching cubes | `components/body*.stl`, `step/body.step` (faceted) |
+| Main body (midsole, upper, foot cavity, throat slot, inner tongue, collar, heel counter, dial pods, webbing straps with 1.6 mm cable channels, U-turn guides, toe-cage straps, eyelets) | Signed-distance CSG with smooth (G2-like) blends, meshed by marching cubes | `components/body*.stl`, `step/body.step` (faceted) |
 | Outsole | Same SDF method: perimeter block lugs, pods with chevrons, cross-hatch floor, shank diamond, midfoot web | `components/outsole*.stl`, `step/outsole.step` |
 | Laces (display only) | Tubes draped over the finished surface, over/under crossings, bow with aglets. Used for renders; lace the real shoe with real laces | `components/lace_assembly*.stl` |
 | Dial mechanism (x6) | Exact B-rep in CadQuery: housing (ratchet teeth, snap axle, cable ports), spool (compliant pawls, cable groove, knot pockets, hex key), knob | `components/dial_{housing,spool,knob}.stl`, `step/dial_*_exact_brep.step` |

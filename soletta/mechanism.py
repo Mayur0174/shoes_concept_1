@@ -44,7 +44,7 @@ DEFAULTS = dict(
     pawl_span=75.0, pawl_count=3,
     pawl_gap=0.5, flange_rr=12.6, rim_t=0.4,
     drum_r=8.0, groove_top=11.6, hex_af=12.0, hex_h=3.0,
-    knot_pocket_r=1.4, knot_pocket_at=5.5, anchor_hole_r=0.7,
+    knot_pocket_r=1.5, knot_channel_r=0.8, knot_pocket_at=5.6, anchor_hole_r=0.7,
     # knob
     knob_r=17.0, knob_t=8.0, hex_clearance=0.1,
     knurl_count=60, cap_d=18.0, top_groove_count=18,
@@ -199,8 +199,11 @@ def make_spool(dp):
     zh = 0.5 * (z_rim + gt)
     for a in (90.0, 270.0):
         px, py = _polar(q["knot_pocket_at"], a)
+        # wide knot cavity inside the solid hub, narrow channel up to the groove
         s = s.cut(cq.Workplane("XY").workplane(offset=b - 0.1).center(px, py)
-                  .circle(q["knot_pocket_r"]).extrude(zh - b + 0.8))
+                  .circle(q["knot_pocket_r"]).extrude(q["pawl_top"] - 0.4 - b))
+        s = s.cut(cq.Workplane("XY").workplane(offset=b - 0.1).center(px, py)
+                  .circle(q["knot_channel_r"]).extrude(zh - b + 0.8))
         hole = (cq.Workplane("YZ").center(0, zh).circle(q["anchor_hole_r"]).extrude(rd + 1.0)
                 .translate((q["knot_pocket_at"] - 0.5, 0, 0)).rotate((0, 0, 0), (0, 0, 1), a))
         s = s.cut(hole)

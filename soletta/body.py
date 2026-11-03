@@ -3,7 +3,7 @@ collar, heel counter, dial pods and brackets, tension cables, guides,
 anchors and eyelets, all as one SDF program."""
 import numpy as np
 
-from .sdf import (Scene, Feature, CapsuleChain, Frame, smin, smax, round_intersect,
+from .sdf import (Scene, Feature, CapsuleChain, StrapChain, Frame, smin, smax, round_intersect,
                   box, cylinder, torus, rbox2d, ray_hit, normals, project, unit)
 
 
@@ -63,7 +63,8 @@ def midsole_field(prof, X, Y, Z):
 
 def panel_region(prof, X, Y):
     q = np.abs(Y - prof.cy(X)) - prof.phw(X)
-    return round_intersect(q, 146.0 * prof.sx - X, 3.0)
+    x0 = (prof.p["upper"]["throat_x"] - 12.0) * prof.sx
+    return round_intersect(q, x0 - X, 3.0)
 
 
 def quarter_region(prof, X, Z):
@@ -71,7 +72,7 @@ def quarter_region(prof, X, Z):
     zl = prof.zline(X) + 7.0 * prof.sz
     zh = prof.zquarter(X)
     a = np.maximum(zl - Z, Z - zh)
-    b = np.maximum(58.0 * sx - X, X - 150.0 * sx)
+    b = np.maximum(58.0 * sx - X, X - prof.p["upper"]["throat_x"] * sx)
     return round_intersect(a, b, 4.0)
 
 
@@ -155,7 +156,8 @@ def tongue_feature(prof):
     ang = np.radians(65.0)
     axis = np.array([-np.cos(ang), 0.0, np.sin(ang)])
     nrm = np.array([np.sin(ang), 0.0, np.cos(ang)])
-    c = np.array([148.0 * sx, float(prof.cy(148.0 * sx)), 86.0 * sz])
+    xt = (prof.p["upper"]["throat_x"] - 2.0) * sx
+    c = np.array([xt, float(prof.cy(xt)), float(prof.Zc(xt)) - 14.0 * sz])
     fr = Frame(c, nrm, ex_hint=axis)
     half_len, half_w, half_t = 22.0 * sz, 22.0 * prof.sy, 3.6
 
@@ -321,10 +323,16 @@ def build_body(prof, log=print):
         sc.add("smooth_union", frame_feature(
             fr, lambda lx, ly, lz, t_pt=t_pt: cylinder(lx, ly, lz, pod_r, -9.0, t_pt, 2.2),
             pod_r + 12, "pod"), 4.0)
+    # the midsole through-chambers stay open below the pods (reference side view)
+    for spec in p["midsole"]["chambers"]:
+        sc.add("smooth_subtract", tunnel_feature(prof, spec), p["midsole"]["chamber_fillet"])
     for d in m.dials:
         fr, t_pt = d["frame"], d["seat"]
+        # flat seat for the housing flange and ears, then a knob-sized clearance
         sc.add("subtract", frame_feature(
-            fr, lambda lx, ly, lz, t_pt=t_pt: cylinder(lx, ly, lz, clear_r, t_pt, t_pt + si["stack"] + 3.0, 0.0),
+            fr, lambda lx, ly, lz, t_pt=t_pt: np.minimum(
+                cylinder(lx, ly, lz, clear_r, t_pt, t_pt + 2.0, 0.0),
+                cylinder(lx, ly, lz, si["wall_ro"] + 1.0, t_pt, t_pt + si["stack"] + 3.0, 0.0)),
             clear_r + 26, "seat"))
 
     m.mark_pods = sc.mark()
@@ -405,16 +413,30 @@ def build_body(prof, log=print):
         loop = np.vstack([strands[0], arc, strands[1][::-1]])
         d["strands"] = [np.vstack([strands[0], arc[:7]]), np.vstack([strands[1], arc[::-1][:7]])]
         d["loop"] = loop
-        sc.add("smooth_union", CapsuleChain(loop, r_sh, "cable"), 0.6)
+        ln = normals(sc, loop, upto)
+        sc.add("smooth_union", StrapChain(loop, ln, cp["strap_width"], cp["strap_thickness"], "cable"), 0.6)
         m.cables.extend(d["strands"])
         m.bores.append(loop)
         # U-turn guide boss
         gfr = Frame(T, TN, ex_hint=u)
         sc.add("smooth_union", frame_feature(
-            gfr, lambda lx, ly, lz, rho=rho: box(lx - rho * 0.35, ly, lz - lift * 0.6,
-                                                 rho + 2.4, rho + 3.4, lift * 0.6 + 2.0, 1.6),
+            gfr, lambda lx, ly, lz, rho=rho: box(lx - rho * 0.3, ly, lz - lift * 0.5,
+                                                 rho + 1.2, rho + 1.6, cp["strap_thickness"] / 2 + 0.8, 1.2),
             rho + 10, "anchor"), 1.0)
         m.hardware.append(("anchor", gfr))
+    # cosmetic webbing V across the toe box (reference top view)
+    for side in (+1, -1):
+        xa, xb = 186.0 * sx, 256.0 * sx
+        t_ = np.linspace(0.0, 1.0, 24)
+        xs_ = xa + (xb - xa) * t_
+        off = (prof.Wu(xs_) - 5.0) * (1 - t_) + 3.0 * t_
+        xy = np.c_[xs_, prof.cy(xs_) + side * off]
+        S, SN, ok = project_top(sc, upto, xy)
+        S, SN = S[ok], SN[ok]
+        if len(S) >= 4:
+            S = S + SN * (cp["strap_thickness"] / 2 - 0.4)
+            sc.add("smooth_union", StrapChain(S, SN, cp["strap_width"] * 0.85, cp["strap_thickness"] * 0.7,
+                                              "cable"), 0.6)
     m.mark_cables = sc.mark()
 
     # mid-span guide sleeves (cosmetic clips over the channel)
@@ -429,9 +451,10 @@ def build_body(prof, log=print):
                          m.mark_brackets)[0]
             gfr = Frame(c, nn, ex_hint=tan)
             sc.add("smooth_union", frame_feature(
-                gfr, lambda lx, ly, lz: box(lx, ly, lz, 3.2, r_sh + 1.0, r_sh + 0.6, 0.7), 8, "guide"), 0.5)
+                gfr, lambda lx, ly, lz: box(lx, ly, lz, 2.6, cp["strap_width"] / 2 + 1.2, cp["strap_thickness"] / 2 + 0.7, 0.7), 8, "guide"), 0.5)
             m.hardware.append(("guide", gfr))
-    # finally open the bores through sheaths, guides, U-turns and mouths
+    # bore paths (opened last, after the eyelets, so nothing can block them)
+    m.bore_paths = []
     for d, loop in zip(m.dials, m.bores):
         fr = d["frame"]
         ext = [fr.world(np.cos(pa) * (mouth_r - 3.0), np.sin(pa) * (mouth_r - 3.0), d["seat"] + si["port_z"])
@@ -439,7 +462,7 @@ def build_body(prof, log=print):
         if np.linalg.norm(ext[0] - loop[0]) > np.linalg.norm(ext[1] - loop[0]):
             ext = ext[::-1]
         path = np.vstack([ext[0], loop, ext[1]])
-        sc.add("subtract", CapsuleChain(path, r_bore, "bore"))
+        m.bore_paths.append(path)
     m.mark_guides = sc.mark()
     log("body: cable channels, U-turn guides and bores added; placing eyelets")
 
@@ -467,6 +490,8 @@ def build_body(prof, log=print):
             sc.add("subtract", frame_feature(
                 efr, lambda lx, ly, lz: cylinder(lx, ly, lz, lp["eyelet_hole_r"], -5.0, 4.0, 0.0),
                 10, "eyelet_hole"))
+    for path in m.bore_paths:
+        sc.add("subtract", CapsuleChain(path, r_bore, "bore"))
     m.mark_final = sc.mark()
     log("body: program complete (%d ops)" % len(sc.ops))
     return m
@@ -502,7 +527,7 @@ def body_labels(m, P):
     eps = 0.35
 
     lab[c["panel"] < eps] = 2
-    collar = (Z > prof.Zc(X) - 13.0) & (X < 146.0 * prof.sx)
+    collar = (Z > prof.Zc(X) - 13.0) & (X < (prof.p["upper"]["throat_x"] - 4.0) * prof.sx)
     lab[collar] = 3
     well = well_field(prof, X, Y, Z)
     lab[np.abs(well) < 0.6] = 3

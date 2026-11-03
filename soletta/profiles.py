@@ -25,18 +25,21 @@ TOE_SPRING_SHAPE = [(-10, 0), (190, 0), (215, 0.04), (240, 0.2), (265, 0.53), (2
 # stack blend: 1 -> heel height, 0 -> forefoot height
 STACK_BLEND = [(-10, 0.94), (0, 0.94), (40, 1.0), (120, 0.56), (210, 0.0), (260, -0.19), (290, -0.31), (300, -0.31)]
 # closed-top height of the upper sections (collar area is cut lower later)
-UPPER_TOP_CTRL = [(-10, 128), (130, 128), (145, 112), (155, 96), (170, 88), (200, 78),
-                  (225, 70), (245, 63), (262, 57), (275, 51), (284, 45), (290, 40), (300, 36)]
+# (reference sheet: the lace line falls from the throat to a low toe box)
+UPPER_TOP_CTRL = [(-10, 128), (82, 128), (96, 112), (108, 105), (125, 100), (150, 93), (175, 86),
+                  (200, 79), (225, 71), (245, 64), (262, 58), (275, 53), (284, 48), (290, 44), (300, 41)]
 # collar top line; values far above the shoe mean "no cut"
-COLLAR_CTRL = [(-10, 104), (0, 104), (12, 103), (35, 98), (60, 91), (85, 88), (110, 90),
-               (130, 94), (145, 99), (152, 104), (160, 160), (175, 400), (300, 400)]
+COLLAR_CTRL = [(-10, 108), (0, 108), (15, 106), (40, 100), (62, 96), (82, 97), (96, 101),
+               (104, 106), (112, 160), (126, 400), (300, 400)]
 # top edge of the midsole side-wall wrap (toe cap / heel counter / pods)
 WRAP_CTRL = [(-10, 74), (0, 74), (20, 72), (40, 62), (60, 52), (85, 47), (110, 45), (140, 46),
              (170, 43), (200, 40), (225, 39), (245, 43), (262, 51), (278, 57), (290, 58), (300, 58)]
 # quarter-panel overlay band (upper edge)
-QUARTER_TOP_CTRL = [(40, 72), (58, 72), (90, 72), (120, 76), (150, 82), (170, 82)]
+QUARTER_TOP_CTRL = [(30, 74), (58, 74), (80, 76), (100, 80), (120, 82), (170, 82)]
 # lace panel half width (top view)
-PANEL_CTRL = [(140, 30), (148, 30), (170, 29), (200, 26), (230, 21), (245, 15), (252, 0.1), (300, 0.1)]
+# (reference: cream panel ~40 mm wide at the throat, ~26 mm near its rounded tip)
+PANEL_CTRL = [(80, 20.5), (100, 20.5), (140, 20), (175, 18.5), (200, 16), (212, 13.5), (220, 8),
+              (224, 0.1), (300, 0.1)]
 # inner wall thickness of the foot opening (collar foam is thicker)
 TWALL_CTRL = [(-10, 7), (100, 7), (140, 5), (300, 5)]
 

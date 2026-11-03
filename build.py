@@ -163,11 +163,17 @@ def main():
     body_p = printable_version(body, pv["body_faces"], "body")
     outsole_p = printable_version(outsole, pv["outsole_faces"], "outsole")
     laces_p = printable_version(laces, pv["lace_faces"], "laces")
-    merged = M.boolean(body_p, outsole_p, "union")
+    # the outsole top is flush with the midsole bottom; overlap it 0.2 mm so
+    # the union has no coplanar contact (which turns non-manifold in float32 STL)
+    outsole_ov = outsole_p.copy()
+    outsole_ov.apply_translation([0, 0, 0.2])
+    merged = M.boolean(body_p, outsole_ov, "union")
     if merged is None or not merged.is_watertight:
         WARN.append("body+outsole union failed; printable shoe exported as two shells")
         merged = trimesh.util.concatenate([body_p, outsole_p])
-    report["components"].append(M.validate("printable shoe (body+outsole)", merged))
+    merged = M.stl_roundtrip(merged)
+    report["components"].append(M.validate("printable shoe (body+outsole), reloaded STL", merged))
+    report["function_checks"] = function_checks(model, prof)
 
     # ---------------------------------------------------------------- exports
     log("exporting STL")
@@ -307,6 +313,34 @@ def export_step(model, body_p, outsole_p, laces_p, kit, dials, params, out):
     log("STEP: assembly written")
 
 
+@optional("function checks")
+def function_checks(model, prof):
+    """Functional clearances on the exact design geometry (the body SDF):
+    every cable channel open end to end, and the tongue free under the
+    lacing throat.  (The printable mesh is decimated to within ~0.05 mm.)"""
+    sc = model.scene
+    out = {}
+    for d, loop in zip(model.dials, model.bores):
+        P = np.vstack([np.linspace(a, b, 6, endpoint=False) for a, b in zip(loop[:-1], loop[1:])])
+        v = sc.points(P)
+        out[f"channel {d['name']} open, min clearance from centre line mm"] = round(float(v.min()), 2)
+        out[f"channel {d['name']} length mm"] = round(float(np.linalg.norm(np.diff(loop, axis=0), axis=1).sum()), 1)
+    up = prof.p["upper"]
+    gaps = []
+    for x in np.linspace(up["slot_x"][0] + 10, up["slot_x"][1] - 10, 6) * prof.sx:
+        cy = float(prof.cy(x))
+        zs = np.arange(prof.ztop(x) + 5, prof.H, 0.05)
+        P = np.c_[np.full_like(zs, x), np.full_like(zs, cy + up["slot_width"] / 2 + 3.0), zs]
+        ins = sc.points(P) < 0
+        t = zs[np.flatnonzero(np.diff(ins.astype(int)))]
+        gaps.append(float(t[2] - t[1]) if len(t) >= 4 else 0.0)
+    out["tongue gap under the quarters, min mm"] = round(min(gaps), 2)
+    for k, v in out.items():
+        if ("open" in k and v < 0.6) or (k.startswith("tongue") and v < 0.5):
+            WARN.append(f"function check failed: {k} = {v}")
+    return out
+
+
 @optional("mechanism sheet")
 def mech_sheet(housing, spool, knob):
     return RD.mechanism_sheet(housing, spool, knob, "renders/dial_mechanism_sections.png")
@@ -339,6 +373,10 @@ def write_markdown(r, path):
                   f"| {wt['samples']} | {wt['p01']} | {wt['p05']} | {wt['median']} | {wt['frac_below_2_5mm']:.2%} |",
                   "", "Thin samples are expected on the cable channel sheaths (4 mm tube, 1.6 mm bore), the inner tongue, guide clips and eyelet rims, "
                   "which are features rather than walls."]
+    fc = r.get("function_checks")
+    if fc:
+        lines += ["", "## Function checks on the printable STL", "", "| check | value |", "|---|---|"]
+        lines += [f"| {k} | {v} |" for k, v in fc.items()]
     mc = r.get("mechanism")
     if mc:
         lines += ["", "## Dial mechanism checks (exact B-rep)", "", "| check | value |", "|---|---|"]

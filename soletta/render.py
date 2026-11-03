@@ -14,7 +14,7 @@ LABEL_COLORS = {
     3: "#2b5868",   # collar / lining
     4: "#2b5868",   # tongue
     5: "#34373b",   # pods / brackets
-    6: "#a3a7ab",   # cable
+    6: "#4f5256",   # webbing strap (carries the cable channel)
     7: "#18191b",   # guides / anchors / pull tab
     8: "#2a2b2d",   # eyelets
 }
@@ -49,12 +49,12 @@ def dial_colors(V, frame, origin, kind):
     q = V - np.asarray(origin)
     lx, ly, lz = q @ frame.ex, q @ frame.ey, q @ frame.ez
     if kind == "housing":
-        return solid_colors(len(V), "#4a4d52")
+        return solid_colors(len(V), "#2e3033")
     if kind == "spool":
         return solid_colors(len(V), "#333436")
     C = solid_colors(len(V), "#232425")
-    cap = (np.hypot(lx, ly) < 9.05) & (lz > 18.5)
-    C[cap] = hex2rgb("#9a9da1")
+    cap = (np.hypot(lx, ly) < 7.6) & (lz > 18.5)
+    C[cap] = hex2rgb("#8d9094")
     return C
 
 

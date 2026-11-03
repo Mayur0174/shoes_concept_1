@@ -24,9 +24,9 @@
     "perimeter_lug_height": 5.0,
     "chevron_lug_depth": 4.0,
     "center_pad_height": 3.0,
-    "perimeter_band_width": 13.0,
-    "perimeter_lug_pitch": 12.0,
-    "perimeter_lug_gap": 4.2,
+    "perimeter_band_width": 16.0,
+    "perimeter_lug_pitch": 15.5,
+    "perimeter_lug_gap": 5.0,
     "chevron_width": 7.0,
     "lug_edge_round": 0.6,
     "texture_depth": 0.5
@@ -65,22 +65,22 @@
     "wrap_thickness": 3.0,
     "lace_panel_thickness": 1.5,
     "quarter_panel_thickness": 1.0,
-    "throat_x": 150.0,
+    "throat_x": 102.0,
     "inner_wall": 2.6,
     "slot_x": [
-      138.0,
-      226.0
+      96.0,
+      202.0
     ],
-    "slot_width": 8.0,
+    "slot_width": 6.0,
     "tongue": {
       "gap": 1.0,
       "thickness": 2.2,
       "x": [
-        128.0,
-        232.0
+        84.0,
+        208.0
       ],
-      "half_width": 21.0,
-      "z_max": 100.0
+      "half_width": 17.0,
+      "z_max": 108.0
     }
   },
   "heel": {
@@ -96,16 +96,16 @@
     "cap_diameter": 18.0,
     "positions_xz": [
       [
-        186.0,
+        177.0,
+        37.0
+      ],
+      [
+        128.0,
         41.0
       ],
       [
-        132.0,
-        53.0
-      ],
-      [
-        69.0,
-        64.0
+        58.0,
+        54.0
       ]
     ],
     "pod_height": 2.5,
@@ -113,43 +113,67 @@
     "peg_diameter": 6.0,
     "peg_length": 4.6,
     "peg_clearance": 0.15,
-    "socket_depth": 5.0
+    "socket_depth": 5.0,
+    "mechanism": {
+      "flange_r": 15.3,
+      "ear_r": 17.2,
+      "ear_lobe_r": 2.6,
+      "screw_hole_d": 2.2,
+      "wall_ro": 14.0,
+      "wall_ri": 12.3,
+      "tooth_tip_r": 10.8,
+      "hub_r": 8.0,
+      "pawl_arm": [
+        9.0,
+        10.2
+      ],
+      "pawl_tip_r": 11.6,
+      "flange_rr": 10.4,
+      "drum_r": 6.8,
+      "hex_af": 10.0,
+      "knot_pocket_at": 5.6,
+      "knob_r": 13.0,
+      "cap_d": 15.0
+    },
+    "max_seat_height": 7.0
   },
   "cables": {
     "line_diameter": 1.0,
     "sheath_diameter": 4.0,
     "bore_diameter": 1.6,
-    "bore_center_above_surface": 1.6,
+    "bore_center_above_surface": 1.4,
     "uturn_radius": 4.5,
     "targets_xz": [
       [
-        226.0,
-        63.0
+        204.0,
+        70.0
       ],
       [
-        170.0,
-        76.0
+        150.0,
+        88.0
       ],
       [
-        42.0,
-        87.0
+        36.0,
+        96.0
       ]
-    ]
+    ],
+    "strap_width": 8.0,
+    "strap_thickness": 3.4
   },
   "laces": {
     "diameter": 4.5,
     "eyelets_per_side": 6,
-    "eyelet_x_start": 158.0,
-    "eyelet_x_end": 232.0,
-    "eyelet_edge_inset": 6.5,
+    "eyelet_x_start": 118.0,
+    "eyelet_x_end": 198.0,
+    "eyelet_edge_inset": 5.0,
     "eyelet_ring_R": 4.0,
     "eyelet_ring_r": 1.3,
     "eyelet_hole_r": 2.6,
     "clearance": 0.4,
-    "crossing_bump": 3.2,
-    "bow_loop_length": 30.0,
-    "bow_loop_width": 8.0,
-    "bow_tail_length": 32.0
+    "crossing_bump": 2.4,
+    "bow_loop_length": 17.0,
+    "bow_loop_width": 5.0,
+    "bow_tail_length": 12.0
   },
   "printable": {
     "body_faces": 900000,

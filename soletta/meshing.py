@@ -252,3 +252,16 @@ def export_mesh(m, path, colors=None):
         m = m.copy()
         m.visual = trimesh.visual.ColorVisuals(m, vertex_colors=colors)
     m.export(path)
+
+
+def stl_roundtrip(m):
+    """Return the mesh exactly as a slicer will read it back from STL
+    (float32 vertices, merged), cleaned of zero-volume slivers."""
+    import io
+    buf = io.BytesIO(trimesh.exchange.stl.export_stl(m))
+    r = trimesh.load(buf, file_type="stl")
+    parts = r.split(only_watertight=False)
+    if len(parts) > 1:
+        keep = [p for p in parts if abs(p.volume) >= 1.0]
+        r = trimesh.util.concatenate(keep) if keep else r
+    return r
