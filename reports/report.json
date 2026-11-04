@@ -293,8 +293,8 @@
       "vertices": 330278,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 14947.308060281399,
-      "area_mm2": 10783.956389458415,
+      "volume_mm3": 14947.308060304647,
+      "area_mm2": 10783.956389409625,
       "bodies": 1,
       "euler": -28,
       "bounds_mm": [
@@ -314,7 +314,7 @@
         49.1,
         41.2
       ],
-      "overhang_area_fraction_gt45": 0.14555639230505457
+      "overhang_area_fraction_gt45": 0.14555639230571313
     },
     {
       "name": "tongue as fitted (separate part)",
@@ -380,7 +380,7 @@
       "vertices": 222903,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 6761.229846414841,
+      "volume_mm3": 6761.229846414843,
       "area_mm2": 8252.335494284787,
       "bodies": 3,
       "euler": -4,
@@ -401,7 +401,7 @@
         27.78,
         86.37
       ],
-      "overhang_area_fraction_gt45": 0.061577316044370944
+      "overhang_area_fraction_gt45": 0.06157731604437095
     },
     {
       "name": "dial housing (each)",
@@ -525,8 +525,8 @@
       "vertices": 423888,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 932846.5682671765,
-      "area_mm2": 205221.57457061994,
+      "volume_mm3": 932846.5682671767,
+      "area_mm2": 205221.57457061997,
       "bodies": 1,
       "euler": -76,
       "bounds_mm": [
@@ -546,7 +546,7 @@
         126.06,
         114.69
       ],
-      "overhang_area_fraction_gt45": 0.21030261332239059
+      "overhang_area_fraction_gt45": 0.21030261332239056
     }
   ],
   "warnings": [
@@ -595,7 +595,7 @@
     125.0,
     127.0
   ],
-  "elapsed_s": 504.1,
+  "elapsed_s": 402.0,
   "dial_frames": [
     {
       "name": "L1",
