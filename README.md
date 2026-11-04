@@ -33,11 +33,19 @@ All the shapes are real geometry, not textures. The SDF approach guarantees the 
 * `shoe_body_with_outsole.stl` / `.3mf`: one watertight piece; print it upright on the outsole
 * `dial_kit_x3_plate.stl`: 3 housings, 3 spools and 3 knobs, already in print orientation
 * `medial_straps_tpu_x3.stl`: the three inner-side straps as flat strips (print flat in TPU), or use 15 mm nylon webbing cut to the lengths in the build report
+* `strap_buckles_petg_x3.stl`: the three ladder-lock buckles (PETG, plate down); their pins press into the moulded seats on the midsole
+* `tongue_tpu_flat.stl`: the tongue, printed flat in TPU and bent into place
 * `dial_housing_single.stl`, `dial_spool_single.stl`, `dial_knob_single.stl`: one of each, for a test print
+
+### Fit
+
+At the default master size (290 mm long) the inside is 270 mm long, 99–101 mm wide at the ball, 66 mm at the heel, 60 mm high over the instep and 31 mm over the toes. That fits a foot up to about **260 mm long (US M8.5–9, EU 42)** with toe room. For a bigger foot, raise `length` (and `max_width`) in `params.json`: every curve scales with them.
 
 ### Shoe body
 
-Print it in **TPU 95A** so it flexes on the foot and the cable tension can pull the upper in. Use 0.2 mm layers, 3 walls, 15–20 % gyroid infill, and tree supports for the midsole chamber roofs and the inside of the toe box (remove them through the throat). At full size (290 mm long) you need a bed of at least 300 mm. Otherwise scale `length`, `max_width` and `height` in `params.json`.
+Print it in **TPU 95A** so it flexes on the foot and the cable tension can pull the upper in. Use 0.2 mm layers, 3 walls and 10–15 % gyroid infill (about 420 g and 45–70 h at 15 %). You need a bed of at least 300 mm.
+
+**Supports.** The midsole chamber roofs and the roof of the toe box (about 130 cm² inside the shoe) need tree supports. Remove the inner ones through the collar and the lacing throat, before you fit the tongue. TPU supports are tough to remove: set a 0.3 mm support Z gap, or use a PLA support interface on a dual-extrusion printer, which peels cleanly off TPU.
 
 ### Dial mechanism (per dial: housing + spool + knob)
 
@@ -52,9 +60,10 @@ Print one set first and check the fit. The spool should turn freely on the axle,
 ### What else you need
 
 * 3 lengths of **1.0 mm braided line** (Dyneema/PE fishing line, 30–50 kg), about 200 mm each
-* 6 **M2 × 6 mm self-tapping screws** (2 per housing)
+* 6 **M2 × 6 mm self-tapping screws** (2 per housing), plus flexible glue (e.g. E6000) under each housing flange, because screws alone hold poorly in TPU
+* optional: about 600 mm of **PTFE tube, 2 mm OD / 1 mm ID**, to line the cable channels (2.2 mm bore). Bare channels pass only about 40 % of the dial's tension to the far end of each loop; a PTFE liner roughly doubles that
 * 15 mm **nylon webbing** for the inner straps (or the printed TPU strips)
-* a drop of **CA glue** per knob
+* a drop of **CA glue** per knob and per buckle, and TPU-compatible glue for the tongue
 * a pair of normal **flat laces** (about 120 cm) for the eyelets
 
 ### Assembly (per dial)
@@ -64,13 +73,18 @@ Print one set first and check the fit. The spool should turn freely on the axle,
 3. Pass both ends through the housing's cable ports. Push each end into a radial hole in the spool groove, pull it out through the knot pocket on the underside, tie a stopper knot and pull it back.
 4. Push the spool down onto the axle until it clicks twice, then glue the knob onto the hex key.
 
+### Tongue
+
+Bend the flat tongue into the throat, padded end up at the collar. Glue its front 15 mm to the inside of the vamp just in front of the end of the lacing slot. The rest must stay free so the two eyelet sides can slide over it.
+
 ### Inner-side straps
 
 Each strap runs from the loop at the lace-panel edge (the collar loop for the rear strap) down to the buckle on the midsole.
 
-1. Pass one end under the bar of the top loop, fold it back about 20 mm and glue or stitch it.
-2. At the bottom, thread the free end down through the outer slot of the buckle and back up through the inner slot.
-3. Pull the free end to tighten. Friction on the centre bar holds it, and lifting the buckle's outer edge releases it.
+1. Press each PETG buckle's four pins into its seat on the midsole (a drop of CA glue in each hole).
+2. Pass one end of the strap under the bar of the top loop, fold it back about 20 mm and glue or stitch it.
+3. At the bottom, thread the free end down through the outer slot of the buckle and back up through the inner slot.
+4. Pull the free end to tighten. Friction on the centre bar holds it, and lifting the buckle's outer edge releases it.
 
 ### Use
 

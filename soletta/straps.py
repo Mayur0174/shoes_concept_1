@@ -65,6 +65,37 @@ def buckle_fn(sp, slots=2):
     return fn, max(hu, hv) + gap + t + 2
 
 
+def buckle_dims(sp):
+    W, post = sp["webbing_width"], sp["post_width"]
+    hu = sp["slot_width"] + sp["bar_width"] / 2 + 2.2
+    hv = W / 2 + 1.5 + post
+    pins = [(su * (hu - 2.2), sv * (hv - post / 2)) for su in (-1, 1) for sv in (-1, 1)]
+    return dict(hu=hu, hv=hv, pins=pins, pin_r=1.1, pin_len=4.0, hole_r=1.3, hole_depth=5.0)
+
+
+def make_buckle(sp):
+    """Separate PETG ladder-lock buckle (exact B-rep).  Local frame: x along
+    the strap, y across, z = shoe surface normal; posts stand on the flat
+    seat at z = 0 and four pins press (and glue) into the seat's holes."""
+    import cadquery as cq
+    bd = buckle_dims(sp)
+    hu, hv = bd["hu"], bd["hv"]
+    gap, t, post = sp["webbing_gap"], sp["frame_thickness"], sp["post_width"]
+    W = sp["webbing_width"]
+    plate = cq.Workplane("XY").workplane(offset=gap).rect(2 * hu, 2 * hv).extrude(t)
+    plate = plate.edges("|Z").fillet(1.0)
+    for c in (sp["bar_width"] / 2 + sp["slot_width"] / 2, -(sp["bar_width"] / 2 + sp["slot_width"] / 2)):
+        plate = plate.cut(cq.Workplane("XY").workplane(offset=gap - 0.1).center(c, 0)
+                          .rect(sp["slot_width"], W + 2.0).extrude(t + 0.2))
+    b = plate
+    for sv in (-1, 1):
+        b = b.union(cq.Workplane("XY").center(0, sv * (hv - post / 2)).rect(2 * hu, post).extrude(gap + 0.01))
+    for pu, pv in bd["pins"]:
+        b = b.union(cq.Workplane("XY").workplane(offset=-bd["pin_len"]).center(pu, pv)
+                    .circle(bd["pin_r"]).extrude(bd["pin_len"] + 0.01))
+    return b.val()
+
+
 def add_strap_hardware(m, sc, prof, upto, log=print):
     """Mould buckles and top loops on the medial side; record strap paths."""
     p = prof.p
@@ -98,18 +129,29 @@ def add_strap_hardware(m, sc, prof, upto, log=print):
         down = unit(B - T)
         bfr = Frame(B, BN, ex_hint=-down)                      # u points up the strap
         tfr = Frame(T, TN, ex_hint=down)
-        bfn, brad = buckle_fn(sp, slots=2)
         tfn, trad = buckle_fn(sp, slots=1)
-        sc.add("smooth_union", _frame_feature(bfr, bfn, brad, "buckle"), 0.6)
         sc.add("smooth_union", _frame_feature(tfr, tfn, trad, "buckle"), 0.6)
+        # bottom: flat seat with 4 pin holes for the separate PETG buckle
+        bd = buckle_dims(sp)
+        hu, hv = bd["hu"], bd["hv"]
+        pad = lambda lu, lv, lw, hu=hu, hv=hv: box(lu, lv, lw + 2.0, hu + 2.0, hv + 2.0, 2.0, 1.0)
+        sc.add("smooth_union", _frame_feature(bfr, pad, hv + 12, "buckle_seat"), 1.0)
+        # flatten at most 2 mm proud of the seat point (never digs into the wall)
+        flat = lambda lu, lv, lw, hu=hu, hv=hv: box(lu, lv, lw - 1.0, hu + 1.2, hv + 1.2, 1.0, 0.4)
+        sc.add("subtract", _frame_feature(bfr, flat, hv + 12, "buckle_seat_cut"))
+        for pu, pv in bd["pins"]:
+            hole = (lambda lu, lv, lw, pu=pu, pv=pv: np.maximum(
+                np.hypot(lu - pu, lv - pv) - bd["hole_r"], np.maximum(-lw - bd["hole_depth"], lw - 1.0)))
+            sc.add("subtract", _frame_feature(bfr, hole, hv + 12, "buckle_pin_hole"))
         # clear webbing passage behind the bars (the shoe surface is curved,
         # the frames are flat): carve a shallow channel under each frame
-        for fr, slots in ((bfr, 2), (tfr, 1)):
-            hu = (sp["slot_width"] + sp["bar_width"] / 2 + 2.2) if slots == 2 else (sp["slot_width"] / 2 + 2.6)
-            pas = (lambda lu, lv, lw, hu=hu: box(lu, lv, lw - sp["webbing_gap"] / 2 + 1.0,
+        for fr, slots in ((tfr, 1),):
+            hu_l = (sp["slot_width"] + sp["bar_width"] / 2 + 2.2) if slots == 2 else (sp["slot_width"] / 2 + 2.6)
+            # only 0.6 mm into the surface: the upper wall here is ~3.7 mm
+            pas = (lambda lu, lv, lw, hu=hu_l: box(lu, lv, lw - (sp["webbing_gap"] - 0.6) / 2,
                                                  hu + 3.0, sp["webbing_width"] / 2 + 0.8,
-                                                 sp["webbing_gap"] / 2 + 1.0, 0.6))
-            sc.add("subtract", _frame_feature(fr, pas, hu + 14, "strap_passage"))
+                                                 (sp["webbing_gap"] + 0.6) / 2, 0.4))
+            sc.add("subtract", _frame_feature(fr, pas, hu_l + 14, "strap_passage"))
         m.straps.append(dict(index=i, top=T, top_n=TN, bottom=B, bottom_n=BN, path=Q, path_n=QN,
                              buckle_frame=bfr, loop_frame=tfr,
                              length=float(np.linalg.norm(np.diff(Q, axis=0), axis=1).sum())))

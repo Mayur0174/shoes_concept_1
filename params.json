@@ -61,12 +61,12 @@
     ]
   },
   "upper": {
-    "inset_from_sole": 4.5,
+    "inset_from_sole": 1.5,
     "wrap_thickness": 3.0,
     "lace_panel_thickness": 1.5,
     "quarter_panel_thickness": 1.0,
     "throat_x": 102.0,
-    "inner_wall": 2.6,
+    "inner_wall": 2.2,
     "slot_x": [
       96.0,
       202.0
@@ -80,7 +80,9 @@
         208.0
       ],
       "half_width": 17.0,
-      "z_max": 108.0
+      "z_max": 122.0,
+      "glue_flap": 15.0,
+      "pad_thickness": 5.0
     }
   },
   "heel": {
@@ -140,8 +142,8 @@
   "cables": {
     "line_diameter": 1.0,
     "sheath_diameter": 4.0,
-    "bore_diameter": 1.6,
-    "bore_center_above_surface": 1.4,
+    "bore_diameter": 2.2,
+    "bore_center_above_surface": 1.7,
     "uturn_radius": 4.5,
     "targets_xz": [
       [
@@ -158,7 +160,7 @@
       ]
     ],
     "strap_width": 8.0,
-    "strap_thickness": 3.4
+    "strap_thickness": 4.0
   },
   "laces": {
     "diameter": 4.5,
@@ -203,7 +205,7 @@
     "post_width": 2.6,
     "bar_width": 3.2,
     "slot_width": 3.4,
-    "buckle_z_offset": -3.0,
+    "buckle_z_offset": -9.0,
     "top_loop_outset": 4.0,
     "collar_drop": 16.0,
     "fold_allowance": 50.0,

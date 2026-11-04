@@ -113,6 +113,14 @@ def main():
     prof = Profiles(params)
     log("profiles + planform maps ready")
     model = build_body(prof, log)
+    from soletta.tongue import tongue_display_scene, flat_tongue_mesh
+    tongue_sc = tongue_display_scene(model, prof)
+
+    class _Drape:            # laces rest on the shoe and on the fitted tongue
+        def points(self, P, upto=None):
+            P = np.asarray(P, float).reshape(-1, 3)
+            return np.minimum(model.scene.points(P, upto), tongue_sc.points(P))
+    model.drape_scene = _Drape()
     lace_sc = build_laces(model, log)
     strap_sc = None
     if model.straps:
@@ -137,6 +145,7 @@ def main():
     outsole = grid_mesh(outsole_sc, (-6, y_lo + 10, -2.0), (L + 6, y_hi - 10, z_hi_out),
                         res["outsole"], "outsole")
     laces = grid_mesh(lace_sc, lace_sc.domain[0], lace_sc.domain[1], res["laces"], "laces")
+    tongue = grid_mesh(tongue_sc, tongue_sc.domain[0], tongue_sc.domain[1], res["laces"], "tongue")
     webbing = None
     if strap_sc is not None:
         webbing = grid_mesh(strap_sc, strap_sc.domain[0], strap_sc.domain[1], res["laces"], "webbing", keep_all=True)
@@ -158,6 +167,17 @@ def main():
         for kind in ("housing", "spool", "knob"):
             dial_meshes.append((d, kind, occ_mesh(d[kind])))
     local = {k: occ_mesh(kit[k]) for k in ("housing", "spool", "knob")}
+    buckle_local, buckle_meshes, buckle_shapes = None, [], []
+    if model.straps:
+        from soletta.straps import make_buckle
+        from soletta.dials import place
+        buckle_cq = make_buckle(params["medial"])
+        buckle_local = occ_mesh(buckle_cq)
+        for st in model.straps:
+            fr = st["buckle_frame"]
+            shp = place(buckle_cq, fr.o, fr.ez, fr.ex)
+            buckle_shapes.append(shp)
+            buckle_meshes.append(occ_mesh(shp))
 
     # ----------------------------------------------------------- validation
     log("validating meshes")
@@ -166,11 +186,16 @@ def main():
     report["components"].append(M.validate("body", body, wall_stats=ws))
     report["components"].append(M.validate("outsole", outsole))
     report["components"].append(M.validate("laces", laces))
+    report["components"].append(M.validate("tongue as fitted (separate part)", tongue))
+    tongue_flat, tongue_len = flat_tongue_mesh(prof)
+    report["components"].append(M.validate("tongue, flat print", tongue_flat))
     if webbing is not None:
         report["components"].append(M.validate("medial straps as fitted (display)", webbing))
     for k in ("housing", "spool", "knob"):
         report["components"].append(M.validate(f"dial {k} (each)", local[k]))
     report["mechanism"] = kit["checks"]
+    if buckle_local is not None:
+        report["components"].append(M.validate("strap buckle (each)", buckle_local))
 
     # ------------------------------------------------------------- printable
     pv = params["printable"]
@@ -187,7 +212,7 @@ def main():
         merged = trimesh.util.concatenate([body_p, outsole_p])
     merged = M.stl_roundtrip(merged)
     report["components"].append(M.validate("printable shoe (body+outsole), reloaded STL", merged))
-    report["function_checks"] = function_checks(model, prof)
+    report["function_checks"] = function_checks(model, prof, buckle_meshes, tongue)
 
     # ---------------------------------------------------------------- exports
     log("exporting STL")
@@ -195,6 +220,7 @@ def main():
     body.export(os.path.join(comp, "body_hires.stl"))
     outsole.export(os.path.join(comp, "outsole_hires.stl"))
     laces.export(os.path.join(comp, "lace_assembly_hires.stl"))
+    tongue.export(os.path.join(comp, "tongue_as_fitted.stl"))
     if webbing is not None:
         webbing.export(os.path.join(comp, "medial_straps_as_fitted_display.stl"))
     body_p.export(os.path.join(comp, "body.stl"))
@@ -239,11 +265,22 @@ def main():
             strips.append(st)
             report.setdefault("strap_lengths_mm", []).append(L)
         trimesh.util.concatenate(strips).export(os.path.join(prn, "medial_straps_tpu_x%d.stl" % len(strips)))
+        bk = buckle_local.copy()
+        bk.apply_transform(trimesh.transformations.rotation_matrix(np.pi, [1, 0, 0]))   # plate on the bed
+        bk.apply_translation([0, 0, -bk.bounds[0][2]])
+        bks = []
+        for i in range(len(model.straps)):
+            t_ = bk.copy()
+            t_.apply_translation([i * 30.0, 0, 0])
+            bks.append(t_)
+        trimesh.util.concatenate(bks).export(os.path.join(prn, "strap_buckles_petg_x%d.stl" % len(bks)))
+        buckle_local.export(os.path.join(comp, "strap_buckle.stl"))
+    tongue_flat.export(os.path.join(prn, "tongue_tpu_flat.stl"))
     export_3mf(merged, os.path.join(prn, "shoe_body_with_outsole.3mf"))
 
-    hi_parts = [body, outsole, laces] + ([webbing] if webbing is not None else []) + [tm for _, _, tm in dial_meshes]
+    hi_parts = [body, outsole, laces, tongue] + ([webbing] if webbing is not None else []) + [tm for _, _, tm in dial_meshes] + buckle_meshes
     trimesh.util.concatenate(hi_parts).export(os.path.join(out, "assembly", "soletta_assembly_hires.stl"))
-    pr_parts = [body_p, outsole_p, laces_p] + ([webbing] if webbing is not None else []) + [tm for _, _, tm in dial_meshes]
+    pr_parts = [body_p, outsole_p, laces_p, tongue] + ([webbing] if webbing is not None else []) + [tm for _, _, tm in dial_meshes] + buckle_meshes
     trimesh.util.concatenate(pr_parts).export(os.path.join(out, "assembly", "soletta_assembly.stl"))
 
     # colours
@@ -262,6 +299,10 @@ def main():
     if webbing is not None:
         color_parts.append((np.asarray(webbing.vertices), np.asarray(webbing.faces),
                             RD.solid_colors(len(webbing.vertices), "#3d4044")))
+    color_parts.append((np.asarray(tongue.vertices), np.asarray(tongue.faces),
+                        RD.solid_colors(len(tongue.vertices), RD.LABEL_COLORS[4])))
+    for bm in buckle_meshes:
+        color_parts.append((np.asarray(bm.vertices), np.asarray(bm.faces), RD.solid_colors(len(bm.vertices), "#17181a")))
     export_glb(color_parts, os.path.join(out, "assembly", "soletta_assembly_color.glb"))
 
     # ---------------------------------------------------------------- renders
@@ -288,7 +329,7 @@ def main():
         write_markdown(report, "reports/report.md")
 
     write_report()  # early copy so renders + report survive a STEP crash
-    export_step(model, body_p, outsole_p, laces_p, kit, dials, params, out)
+    export_step(model, body_p, outsole_p, laces_p, kit, dials, params, out, buckle_shapes)
     write_report()
     package(out)
     log("done")
@@ -310,7 +351,7 @@ def export_glb(parts, path):
 
 
 @optional("STEP export")
-def export_step(model, body_p, outsole_p, laces_p, kit, dials, params, out):
+def export_step(model, body_p, outsole_p, laces_p, kit, dials, params, out, buckle_shapes=()):
     import cadquery as cq
     sp = params["step"]
     log("STEP: building faceted solids for organic bodies")
@@ -340,6 +381,8 @@ def export_step(model, body_p, outsole_p, laces_p, kit, dials, params, out):
         assy.add(d["housing"], name=f"dial_housing_{d['name']}", color=cq.Color(0.29, 0.30, 0.32))
         assy.add(d["spool"], name=f"dial_spool_{d['name']}", color=cq.Color(0.20, 0.20, 0.21))
         assy.add(d["knob"], name=f"dial_knob_{d['name']}", color=cq.Color(0.14, 0.14, 0.15))
+    for i, shp in enumerate(buckle_shapes):
+        assy.add(shp, name=f"strap_buckle_{i + 1}", color=cq.Color(0.09, 0.09, 0.10))
     path = os.path.join(out, "step", "soletta_assembly.step")
     if hasattr(assy, "export"):
         assy.export(path)
@@ -349,7 +392,7 @@ def export_step(model, body_p, outsole_p, laces_p, kit, dials, params, out):
 
 
 @optional("function checks")
-def function_checks(model, prof):
+def function_checks(model, prof, buckle_meshes=(), tongue=None):
     """Functional clearances on the exact design geometry (the body SDF):
     every cable channel open end to end, and the tongue free under the
     lacing throat.  (The printable mesh is decimated to within ~0.05 mm.)"""
@@ -361,29 +404,46 @@ def function_checks(model, prof):
         out[f"channel {d['name']} open, min clearance from centre line mm"] = round(float(v.min()), 2)
         out[f"channel {d['name']} length mm"] = round(float(np.linalg.norm(np.diff(loop, axis=0), axis=1).sum()), 1)
     up = prof.p["upper"]
-    gaps = []
-    for x in np.linspace(up["slot_x"][0] + 10, up["slot_x"][1] - 10, 6) * prof.sx:
-        cy = float(prof.cy(x))
-        zs = np.arange(prof.ztop(x) + 5, prof.H, 0.05)
-        P = np.c_[np.full_like(zs, x), np.full_like(zs, cy + up["slot_width"] / 2 + 3.0), zs]
-        ins = sc.points(P) < 0
-        t = zs[np.flatnonzero(np.diff(ins.astype(int)))]
-        gaps.append(float(t[2] - t[1]) if len(t) >= 4 else 0.0)
-    out["tongue gap under the quarters, min mm"] = round(min(gaps), 2)
+    # the lacing throat must be open over its whole length so the quarters can close
+    x0, x1 = up["slot_x"][0] * prof.sx + 2, up["slot_x"][1] * prof.sx - 2
+    worst = np.inf
+    for x in np.linspace(x0, x1, 25):
+        zs = np.arange(prof.ztop(x) + 5, float(prof.Zt(x)) + 6, 0.25)
+        P = np.c_[np.full_like(zs, x), np.full_like(zs, prof.cy(x)), zs]
+        worst = min(worst, float(sc.points(P).min()))
+    out["throat slot open from footbed to top, min clearance mm"] = round(worst, 2)
+    if tongue is not None:
+        V = np.asarray(tongue.vertices)
+        root0 = up["slot_x"][1] * prof.sx
+        free = V[V[:, 0] < root0 - 3]
+        glued = V[V[:, 0] > root0 + 4]
+        out["tongue (sliding part) vs shoe min clearance mm"] = round(float(sc.points(free).min()), 2)
+        out["tongue glue flap distance to vamp, max mm"] = round(float(np.abs(sc.points(glued)).min()), 2) if len(glued) else None
     if model.straps:
         sp = prof.p["medial"]
         g, t, bar, w = sp["webbing_gap"], sp["frame_thickness"], sp["bar_width"], sp["slot_width"]
-        for st in model.straps:
+        for st, bm in zip(model.straps, buckle_meshes):
+            # the separate buckle must sit on its seat without cutting into the shoe
+            V = np.asarray(bm.vertices)
+            out[f"strap {st['index'] + 1} buckle vs shoe min clearance mm"] = round(float(sc.points(V).min()), 2)
             fr = st["buckle_frame"]
-            c = bar / 2 + w / 2
-            P = np.array([fr.world(u, v, wz) for u in (-c, c) for v in (-6.0, 0.0, 6.0) for wz in (g / 2, g + t / 2)]
-                         + [fr.world(0.0, v, g / 2) for v in (-6.0, 0.0, 6.0)])
-            out[f"strap {st['index'] + 1} buckle slots + webbing gap clear, min mm"] = round(float(sc.points(P).min()), 2)
+            P = np.array([fr.world(u, v, g / 2) for u in (-4.0, 0.0, 4.0) for v in (-6.0, 0.0, 6.0)])
+            out[f"strap {st['index'] + 1} webbing passage under buckle clear, min mm"] = round(float(sc.points(P).min()), 2)
+            # solid wall behind the seat (inward along the normal)
+            ts = np.arange(0.2, 12.0, 0.1)
+            Q = np.array([fr.world(u, v, -t_) for u in (-2.5, 0.0, 2.5) for v in (-6.0, 0.0, 6.0) for t_ in ts])
+            solid = (sc.points(Q) < 0).reshape(9, len(ts))
+            run = [float(ts[np.argmin(r)] - ts[0]) if not r.all() else float(ts[-1]) for r in solid]
+            out[f"strap {st['index'] + 1} wall behind buckle seat, min mm"] = round(min(run), 1)
             fr = st["loop_frame"]
             P = np.array([fr.world(0.0, v, wz) for v in (-6.0, 0.0, 6.0) for wz in (g / 2, g + t / 2)])
             out[f"strap {st['index'] + 1} top loop clear, min mm"] = round(float(sc.points(P).min()), 2)
     for k, v in out.items():
-        if ("open" in k and v < 0.6) or (k.startswith("tongue") and v < 0.5) or (" clear" in k and v < 0.5):
+        if v is None:
+            continue
+        if (("open" in k and v < 0.6) or (k.startswith("tongue (sliding") and v < 0.3)
+                or ("clear, min" in k and v < 0.5) or ("clearance mm" in k and v < -0.05)
+                or ("wall behind" in k and v < 3.0)):
             WARN.append(f"function check failed: {k} = {v}")
     return out
 

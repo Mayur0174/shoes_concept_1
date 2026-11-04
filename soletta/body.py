@@ -267,9 +267,8 @@ def build_body(prof, log=print):
     sc.add("smooth_subtract", Feature(lambda X, Y, Z: collar_cut_field(prof, X, Y, Z), None, "collar_cut"), 2.5)
     sc.add("smooth_subtract", Feature(lambda X, Y, Z: foot_cavity_field(prof, X, Y, Z), None, "foot_cavity"), 2.0)
     sc.add("smooth_subtract", Feature(lambda X, Y, Z: throat_slot_field(prof, X, Y, Z), None, "throat_slot"), 1.0)
-    sc.add("smooth_union", Feature(lambda X, Y, Z: inner_tongue_field(prof, X, Y, Z), None, "tongue_inner"), 0.8)
-    tongue, m.tongue_frame = tongue_feature(prof)
-    sc.add("smooth_union", tongue, 3.0)
+    # the tongue is a separate part (see tongue.py)
+    m.tongue_pad, m.tongue_frame = tongue_feature(prof)
     sc.add("smooth_union", pull_tab_feature(prof), 1.5)
     m.mark_base = sc.mark()
     log("body: base program ready, placing dials")
@@ -537,13 +536,11 @@ def body_labels(m, P):
     lab[collar] = 3
     well = well_field(prof, X, Y, Z)
     lab[np.abs(well) < 0.6] = 3
-    tongue_f = [f for k, f, _ in m.scene.ops if f.name == "tongue"][0]
-    lab[tongue_f.points(P, 1.0) < 0.4] = 4
     lab[(grey < eps) & (lab != 3)] = 1
 
     groups = {"pod": 5, "bracket": 5, "cable": 6, "guide": 7, "anchor": 7, "eyelet": 8, "buckle": 7,
               "pull_tab": 7}
-    lab[inner_tongue_field(prof, X, Y, Z) < 0.4] = 4
+
     for kind, f, k in m.scene.ops:
         g = groups.get(f.name)
         if g is None:
