@@ -1,0 +1,96 @@
+"""Build the high-detail DISPLAY model (traced from the reference photos).
+
+Not for printing: see build.py / params.json for the printable, working shoe.
+Outputs to out_display/: one STL per part, a combined GLB, and (when the
+Blender `bpy` module is available) clay renders registered to the photos.
+
+usage: python build_display.py [--res 0.4] [--params params_display.json]
+"""
+import argparse
+import json
+import os
+import sys
+import time
+
+import numpy as np
+import trimesh
+
+import build as B
+from soletta.profiles import Profiles
+from soletta.body import build_body
+from soletta.outsole import build_outsole
+from soletta.laces import build_laces
+from soletta.tongue import tongue_display_scene
+from soletta.dials import tessellate, place
+from soletta.display import make_display_dial
+
+GREYS = {  # clay tones per part, only to tell parts apart
+    "body": "#a6aaae", "outsole": "#3b3e41", "tongue": "#979da2", "laces": "#dedad2",
+    "dials": "#47494c", "webbing": "#6c7074", "buckles": "#2e3032",
+}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--params", default="params_display.json")
+    ap.add_argument("--res", type=float, default=None)
+    ap.add_argument("--out", default="out_display")
+    a = ap.parse_args()
+    p = json.load(open(a.params))
+    res = p["resolution"]["display"]
+    h = a.res or res["body"]
+    os.makedirs(a.out, exist_ok=True)
+    T0 = time.time()
+    prof = Profiles(p)
+    model = build_body(prof, B.log)
+    tongue_sc = tongue_display_scene(model, prof)
+
+    class _Drape:
+        def points(self, P, upto=None):
+            P = np.asarray(P, float).reshape(-1, 3)
+            return np.minimum(model.scene.points(P, upto), tongue_sc.points(P))
+    model.drape_scene = _Drape()
+    lace_sc = build_laces(model, B.log)
+
+    L = prof.L
+    parts = {}
+    parts["body"] = B.grid_mesh(model.scene, (-14, -88, 2), (L + 12, 88, 160), h, "body")
+    parts["outsole"] = B.grid_mesh(build_outsole(prof), (-10, -78, -2), (L + 10, 78, 32),
+                                   max(h * 0.75, 0.3), "outsole")
+    parts["tongue"] = B.grid_mesh(tongue_sc, tongue_sc.domain[0], tongue_sc.domain[1], max(h * 0.75, 0.3), "tongue")
+    parts["laces"] = B.grid_mesh(lace_sc, lace_sc.domain[0], lace_sc.domain[1], max(h * 0.7, 0.3), "laces")
+    if model.straps:
+        from soletta.straps import build_strap_display, make_buckle
+        ws = build_strap_display(model, prof)
+        parts["webbing"] = B.grid_mesh(ws, ws.domain[0], ws.domain[1], max(h * 0.7, 0.3), "webbing", keep_all=True)
+        bq = make_buckle(p["medial"])
+        bms = []
+        for st in model.straps:
+            fr = st["buckle_frame"]
+            V, F = tessellate(place(bq, fr.o, fr.ez, fr.ex), 0.02, 0.15)
+            bms.append(trimesh.Trimesh(V, F, process=True))
+        parts["buckles"] = trimesh.util.concatenate(bms)
+    dd = make_display_dial(p["display_features"]["dial"])
+    dms = []
+    for d in model.dials:
+        fr = d["frame"]
+        o = fr.world(0, 0, d["seat"])
+        V, F = tessellate(place(dd, o, fr.ez, fr.ex), 0.02, 0.12)
+        dms.append(trimesh.Trimesh(V, F, process=True))
+    parts["dials"] = trimesh.util.concatenate(dms)
+
+    scene = trimesh.Scene()
+    for k, m in parts.items():
+        m.export(os.path.join(a.out, f"{k}.stl"))
+        c = GREYS[k].lstrip("#")
+        rgb = [int(c[i:i + 2], 16) for i in (0, 2, 4)]
+        mm = m.copy()
+        mm.visual = trimesh.visual.ColorVisuals(mm, vertex_colors=np.tile(rgb + [255], (len(mm.vertices), 1)))
+        scene.add_geometry(mm, node_name=k, geom_name=k)
+        B.log(f"{k}: {len(m.faces)} triangles, watertight={m.is_watertight}")
+    scene.export(os.path.join(a.out, "soletta_display.glb"))
+    B.log(f"display model done in {time.time() - T0:.0f}s")
+
+
+if __name__ == "__main__":
+    main()

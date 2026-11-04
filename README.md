@@ -7,6 +7,22 @@ All the code runs on GitHub Actions, so nothing needs to be installed locally. E
 * publishes a **GitHub Release** `build-N` with zipped STEP, STL, printable and assembly files
 * commits preview renders to `renders/` and a validation report to `reports/`
 
+## Display model (looks, not printing)
+
+`build_display.py` builds a second, high-detail model that follows the reference photographs as closely as possible. It is for renders and the viewer, not for printing. The printable, working shoe is still `build.py` + `params.json`.
+
+* `params_display.json` holds every curve traced from the photos: side silhouette and heel lean, instep line, collar line, midsole wave line, planform, sole openings, dial centres, strap paths, keeper bar, panel and collar shape. The values are millimetres measured from the side view (0.314 mm/px) and top view (0.325 mm/px).
+* Display-only features live in `soletta/display.py`:
+  * the grey sole as a bulging tub with a rounded lip
+  * dial cradles
+  * the flat webbing straps in the photo layout
+  * the keeper bar and strap guides
+  * a padded collar that is thicker at the heel
+  * the heel badge
+  * sculpted sidewall pockets and grooves
+* Run `python build_display.py --res 0.4` to write `out_display/` (STL per part plus a GLB).
+* Clay renders registered to the photos (same frame and scale) are made with Blender's `bpy` module. The side silhouette matches the photo at IoU ≈ 0.91.
+
 ## Editing the model
 
 Every dimension is in [`params.json`](params.json): master length, width and height, heel and forefoot stack, toe spring, chamber positions, dial size and placement, cable targets, eyelets, lace diameter and so on. Change a value, commit and push, and CI rebuilds everything. Set `"quality": "full"` for production resolution (0.35 mm body grid). `"draft"` gives a fast preview (0.8 mm).

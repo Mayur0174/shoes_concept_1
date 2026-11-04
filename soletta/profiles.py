@@ -122,18 +122,29 @@ class Profiles:
         self.sy = self.W / BASE_W
         self.sz = self.H / BASE_H
         sx, sy, sz = self.sx, self.sy, self.sz
+        # control tables can be overridden per model (the display model traces
+        # them from the reference photographs)
+        T = dict(HW_CTRL=HW_CTRL, CY_CTRL=CY_CTRL, HEEL_BEVEL_CTRL=HEEL_BEVEL_CTRL,
+                 TOE_SPRING_SHAPE=TOE_SPRING_SHAPE, STACK_BLEND=STACK_BLEND, UPPER_TOP_CTRL=UPPER_TOP_CTRL,
+                 COLLAR_CTRL=COLLAR_CTRL, WRAP_CTRL=WRAP_CTRL, QUARTER_TOP_CTRL=QUARTER_TOP_CTRL,
+                 PANEL_CTRL=PANEL_CTRL, TWALL_CTRL=TWALL_CTRL, HEEL_ROUND=HEEL_ROUND, TOE_ROUND=TOE_ROUND)
+        T.update(p.get("tables", {}))
+        self.T = T
+        self.heel_round, self.toe_round = float(T["HEEL_ROUND"]), float(T["TOE_ROUND"])
 
-        self._hw = Curve(HW_CTRL, sx, sy)
-        self.cy = Curve(CY_CTRL, sx, sy)
-        self._bevel = Curve(HEEL_BEVEL_CTRL, sx, sz)
-        self._spring = Curve(TOE_SPRING_SHAPE, sx, 1.0)
-        self._blend = Curve(STACK_BLEND, sx, 1.0)
-        self.Zt = Curve(UPPER_TOP_CTRL, sx, sz)
-        self.Zc = Curve(COLLAR_CTRL, sx, sz)
-        self.zline = Curve(WRAP_CTRL, sx, sz)
-        self.zquarter = Curve(QUARTER_TOP_CTRL, sx, sz)
-        self.phw = Curve(PANEL_CTRL, sx, sy)
-        self.twall = Curve(TWALL_CTRL, sx, 1.0)
+        self._hw = Curve(T["HW_CTRL"], sx, sy)
+        self.cy = Curve(T["CY_CTRL"], sx, sy)
+        self._bevel = Curve(T["HEEL_BEVEL_CTRL"], sx, sz)
+        self._spring = Curve(T["TOE_SPRING_SHAPE"], sx, 1.0)
+        self._blend = Curve(T["STACK_BLEND"], sx, 1.0)
+        self.Zt = Curve(T["UPPER_TOP_CTRL"], sx, sz)
+        self.Zc = Curve(T["COLLAR_CTRL"], sx, sz)
+        self.zline = Curve(T["WRAP_CTRL"], sx, sz)
+        self.zquarter = Curve(T["QUARTER_TOP_CTRL"], sx, sz)
+        self.phw = Curve(T["PANEL_CTRL"], sx, sy)
+        self.twall = Curve(T["TWALL_CTRL"], sx, 1.0)
+        hr = T.get("HEEL_RECEDE")
+        self.heel_recede = Curve(hr, sz, sx) if hr else None
 
         self.heel_h = float(p["heel_height"])
         self.fore_h = float(p["forefoot_height"])
@@ -144,15 +155,19 @@ class Profiles:
         # 2D planform maps
         pad = 25.0
         self.x_lo, self.x_hi = -pad, self.L + pad
-        self.y_lo = -self.W / 2 - pad
-        self.y_hi = self.W / 2 + pad
+        hw_max = max(self.W / 2, max(v for _, v in T["HW_CTRL"]) * sy)
+        self.y_lo = -hw_max - pad
+        self.y_hi = hw_max + pad
         h2 = float(p["resolution"]["planform_map"])
         self.sole2d = Map2D(self.outline(0.0), self.x_lo, self.x_hi, self.y_lo, self.y_hi, h2, with_phase=True)
-        self.upper2d = Map2D(self.outline(self.upper_inset), self.x_lo, self.x_hi, self.y_lo, self.y_hi, h2)
+        ic = T.get("UPPER_INSET_CTRL")
+        self.inset_curve = Curve(ic, sx, sy) if ic else None
+        self.upper2d = Map2D(self.outline(self.upper_inset if ic is None else self.inset_curve),
+                             self.x_lo, self.x_hi, self.y_lo, self.y_hi, h2)
 
     # -- 1D profiles -----------------------------------------------------------
     def end_factor(self, x):
-        rh, rt = HEEL_ROUND * self.sx, TOE_ROUND * self.sx
+        rh, rt = self.heel_round * self.sx, self.toe_round * self.sx
         a = np.clip(x / rh, 0.0, 1.0)
         b = np.clip((x - (self.L - rt)) / rt, 0.0, 1.0)
         return np.sqrt(np.clip(1 - (1 - a) ** 2, 0, 1)) * np.sqrt(np.clip(1 - b ** 2, 0, 1))
@@ -161,7 +176,8 @@ class Profiles:
         return self._hw(x) * self.end_factor(x)
 
     def Wu(self, x):
-        return np.maximum(self.hw(x) - self.upper_inset, 0.0)
+        ins = self.upper_inset if self.inset_curve is None else self.inset_curve(x)
+        return np.maximum(self.hw(x) - ins, 0.0)
 
     def zg(self, x):
         """Ground line (bottom of the perimeter lugs): heel bevel + toe spring."""
@@ -184,7 +200,7 @@ class Profiles:
     def outline(self, inset, n=320):
         t = np.linspace(0.0, 1.0, n)
         x = self.L * (1 - np.cos(np.pi * t)) / 2
-        w = self.hw(x) - inset
+        w = self.hw(x) - (inset(x) if callable(inset) else inset)
         keep = w > 1e-3
         x, w = x[keep], w[keep]
         c = self.cy(x)
