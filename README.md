@@ -51,11 +51,11 @@ All the shapes are real geometry, not textures. The SDF approach guarantees the 
 
 ### Fit
 
-At the default master size (290 mm long) the inside is 270 mm long, 99–101 mm wide at the ball, 66 mm at the heel, 60 mm high over the instep and 31 mm over the toes. That fits a foot up to about **260 mm long (US M8.5–9, EU 42)** with toe room. For a bigger foot, raise `length` (and `max_width`) in `params.json`: every curve scales with them.
+The printable shoe uses the photo-matched shape (`"shape": "photo"` in `params.json`, with the same traced profiles as `params_display.json`). At the default size (290 mm long) the inside is about 266 mm long, 105–107 mm wide at the ball, 79 mm at the heel, 47 mm high over the ball and 30 mm over the toes. That fits a foot up to about 255 mm long (US M8–8.5). For a bigger foot, raise `length` (and `max_width`) in `params.json`: every curve scales with them.
 
 ### Shoe body
 
-Print it in **TPU 95A** so it flexes on the foot and the cable tension can pull the upper in. Use 0.2 mm layers, 3 walls and 10–15 % gyroid infill (about 420 g and 45–70 h at 15 %). You need a bed of at least 300 mm.
+Print it in **TPU 95A** so it flexes on the foot and the cable tension can pull the upper in. Use 0.2 mm layers, 3 walls and 10–15 % gyroid infill (about 420 g and 45–70 h at 15 %). The printed shoe is about 296 × 141 × 138 mm, so you need a bed of at least 300 mm.
 
 **Supports.** The roof of the toe box (about 130 cm² inside the shoe) need tree supports. Remove the inner ones through the collar and the lacing throat, before you fit the tongue. TPU supports are tough to remove: set a 0.3 mm support Z gap, or use a PLA support interface on a dual-extrusion printer, which peels cleanly off TPU.
 

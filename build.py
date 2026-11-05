@@ -142,7 +142,8 @@ def main():
     y_hi = max(float((prof.cy(np.linspace(0, L, 200)) + prof.hw(np.linspace(0, L, 200))).max()),
                float(dial_pts[:, 1].max()) + 30) + 4
     z_lo = float(prof.zmid_bottom(np.linspace(0, L, 300)).min()) - 3
-    body = grid_mesh(model.scene, (-8, y_lo, z_lo), (L + 8, y_hi, H + 3), res["body"], "body")
+    z_top = max(H, max(v for _, v in prof.T["UPPER_TOP_CTRL"]), 0.0) + 12.0   # room for the collar roll
+    body = grid_mesh(model.scene, (-12, y_lo, z_lo), (L + 10, y_hi, z_top), res["body"], "body")
 
     z_hi_out = float(prof.zmid_bottom(np.linspace(0, L, 300)).max()) + 2
     outsole = grid_mesh(outsole_sc, (-6, y_lo + 10, -2.0), (L + 6, y_hi - 10, z_hi_out),

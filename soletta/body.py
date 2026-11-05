@@ -546,6 +546,10 @@ def build_body(prof, log=print):
             m.mark_guides = sc.mark()
     log("body: cable channels, U-turn guides and bores added; placing eyelets")
 
+    if p.get("shape") == "photo" and not p.get("display"):
+        from .display import add_photo_shape
+        add_photo_shape(m, sc, prof, log)
+        m.mark_guides = sc.mark()
     m.eyelets = {}
     if p.get("lacing", {}).get("system") != "cable_guides":
         # ---- eyelets -------------------------------------------------------------

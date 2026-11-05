@@ -87,15 +87,7 @@ def add_display_lateral(m, sc, prof, log=print):
             sc.add("smooth_subtract", Feature(pocket, tf.bbox, "pocket"), spec.get("fillet", p["midsole"]["chamber_fillet"]))
         else:
             sc.add("smooth_subtract", tf, p["midsole"]["chamber_fillet"])
-    # sweeping sidewall grooves (both sides)
-    for g in dp["grooves"]:
-        for s_ in (+1, -1):
-            P, N, ok = _side_points(sc, sc.mark(), prof, _densify(g["xz"], 2.0), s_)
-            P = P[ok]
-            if len(P) >= 2:
-                # centre the groove outside the skin so it is only `depth` deep
-                off = g["radius"] - g.get("depth", 2.0)
-                sc.add("smooth_subtract", CapsuleChain(P + N[ok] * off, g["radius"], "groove"), 1.2)
+    add_grooves(sc, prof)
     upto = sc.mark()
 
     # ---- webbing straps ------------------------------------------------------
@@ -150,6 +142,31 @@ def add_display_lateral(m, sc, prof, log=print):
 
         sc.add("smooth_union", _ff(fr, guide, pod["radius"] + 14, "guide"), 0.4)
 
+    add_collar_and_badge(m, sc, prof, upto)
+    m.bores, m.hardware = [], []
+    log("display: cradles, %d straps, keeper, guides, rolled collar, heel badge" % len(m.display_straps))
+
+
+
+def add_grooves(sc, prof):
+    """Sweeping sidewall grooves on both sides (shared with the printable shape)."""
+    dp = prof.p["display_features"]
+    # sweeping sidewall grooves (both sides)
+    for g in dp["grooves"]:
+        for s_ in (+1, -1):
+            P, N, ok = _side_points(sc, sc.mark(), prof, _densify(g["xz"], 2.0), s_)
+            P = P[ok]
+            if len(P) >= 2:
+                # centre the groove outside the skin so it is only `depth` deep
+                off = g["radius"] - g.get("depth", 2.0)
+                sc.add("smooth_subtract", CapsuleChain(P + N[ok] * off, g["radius"], "groove"), 1.2)
+
+
+def add_collar_and_badge(m, sc, prof, upto=None):
+    """Padded collar roll and heel badge (shared with the printable shape)."""
+    dp = prof.p["display_features"]
+    if upto is None:
+        upto = sc.mark()
     # ---- rolled collar ----------------------------------------------------------
     cl = dp["collar"]
     rr = cl["radius"]
@@ -206,9 +223,13 @@ def add_display_lateral(m, sc, prof, log=print):
 
         sc.add("smooth_union", _ff(bfr, badge, hb_["radius"] + 6, "guide"), 0.8)
 
-    m.bores, m.hardware = [], []
-    log("display: cradles, %d straps, keeper, guides, rolled collar, heel badge" % len(m.display_straps))
 
+
+def add_photo_shape(m, sc, prof, log=print):
+    """The photo-matched shape details for the printable model."""
+    add_grooves(sc, prof)
+    add_collar_and_badge(m, sc, prof, sc.mark())
+    log("shape: photo-matched sidewall groove, padded collar and heel badge")
 
 def make_display_dial(dd):
     """Dial as seen in the reference: ring housing, knurled knob, domed metal
