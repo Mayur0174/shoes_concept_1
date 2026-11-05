@@ -49,7 +49,7 @@
       "lace_panel_thickness": 2.6,
       "quarter_panel_thickness": 1.0,
       "throat_x": 100.0,
-      "inner_wall": 2.2,
+      "inner_wall": 2.6,
       "slot_x": [
         100.0,
         202.0
@@ -76,6 +76,12 @@
         "center_strip": {
           "width": 16.0,
           "thickness": 1.4
+        },
+        "keeper": {
+          "gap": 4.0,
+          "wall": 1.6,
+          "clear": 3.0,
+          "top": 1.2
         }
       }
     },
@@ -250,7 +256,9 @@
             106
           ]
         }
-      ]
+      ],
+      "guide_pad_width": 9.0,
+      "guide_pad_thickness": 1.4
     },
     "shape": "photo",
     "note": "Printable, working shoe in the photo-matched shape (profiles shared with params_display.json).",
@@ -638,11 +646,15 @@
         ],
         [
           221,
-          0.1
+          0.5
+        ],
+        [
+          223,
+          -2.0
         ],
         [
           300,
-          0.1
+          -2.0
         ]
       ],
       "TWALL_CTRL": [
@@ -766,6 +778,32 @@
           300,
           6
         ]
+      ],
+      "HEEL_INNER_HALF": [
+        [
+          -10,
+          33
+        ],
+        [
+          40,
+          35
+        ],
+        [
+          70,
+          38
+        ],
+        [
+          95,
+          48
+        ],
+        [
+          115,
+          90
+        ],
+        [
+          300,
+          90
+        ]
       ]
     },
     "display_features": {
@@ -877,12 +915,12 @@
   "components": [
     {
       "name": "body",
-      "triangles": 4172720,
-      "vertices": 2086350,
+      "triangles": 4118646,
+      "vertices": 2059313,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 1075549.0869438532,
-      "area_mm2": 194200.83046925694,
+      "volume_mm3": 1123659.4778475729,
+      "area_mm2": 192706.66983379814,
       "bodies": 1,
       "euler": -10,
       "bounds_mm": [
@@ -902,14 +940,14 @@
         140.44,
         131.56
       ],
-      "overhang_area_fraction_gt45": 0.1094812247285471,
+      "overhang_area_fraction_gt45": 0.10742135316534397,
       "wall_thickness": {
-        "samples": 3647,
+        "samples": 3635,
         "p01": 1.55,
-        "p05": 2.25,
-        "median": 10.05,
-        "frac_below_2_5mm": 0.2879,
-        "points_below_2_5mm": 1050
+        "p05": 2.55,
+        "median": 12.45,
+        "frac_below_2_5mm": 0.0272,
+        "points_below_2_5mm": 99
       }
     },
     {
@@ -943,19 +981,19 @@
     },
     {
       "name": "tongue as fitted (separate part)",
-      "triangles": 981068,
-      "vertices": 490536,
+      "triangles": 1103960,
+      "vertices": 551964,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 33126.152219891,
-      "area_mm2": 16703.457236860635,
+      "volume_mm3": 34634.92402994517,
+      "area_mm2": 18896.748854666974,
       "bodies": 1,
-      "euler": 2,
+      "euler": -16,
       "bounds_mm": [
         [
           90.26,
           -25.59,
-          63.5
+          63.07
         ],
         [
           217.0,
@@ -966,20 +1004,20 @@
       "extents_mm": [
         126.74,
         51.18,
-        66.93
+        67.36
       ],
-      "overhang_area_fraction_gt45": 0.3951699617730352
+      "overhang_area_fraction_gt45": 0.3702986979738511
     },
     {
       "name": "tongue, flat print",
-      "triangles": 620,
-      "vertices": 312,
+      "triangles": 732,
+      "vertices": 356,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 33691.632721481634,
-      "area_mm2": 20588.002552761503,
+      "volume_mm3": 35183.71583141518,
+      "area_mm2": 23194.19899635772,
       "bodies": 1,
-      "euler": 2,
+      "euler": -10,
       "bounds_mm": [
         [
           0.0,
@@ -987,17 +1025,17 @@
           0.0
         ],
         [
-          178.64,
+          178.69,
           52.0,
-          5.0
+          8.6
         ]
       ],
       "extents_mm": [
-        178.64,
+        178.69,
         52.0,
-        5.0
+        8.6
       ],
-      "overhang_area_fraction_gt45": 0.0
+      "overhang_area_fraction_gt45": 0.01862534679761257
     },
     {
       "name": "dial housing (each)",
@@ -1088,12 +1126,12 @@
     },
     {
       "name": "printable shoe (body+outsole), reloaded STL",
-      "triangles": 1202550,
-      "vertices": 601265,
+      "triangles": 1200354,
+      "vertices": 600167,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 1168842.4468114742,
-      "area_mm2": 213316.2916398547,
+      "volume_mm3": 1216951.608195856,
+      "area_mm2": 211822.2384496277,
       "bodies": 1,
       "euler": -10,
       "bounds_mm": [
@@ -1113,11 +1151,11 @@
         140.44,
         138.1
       ],
-      "overhang_area_fraction_gt45": 0.17202505985424027
+      "overhang_area_fraction_gt45": 0.1705713375963364
     }
   ],
   "warnings": [
-    "body: removed 6 floating fragment(s)",
+    "body: removed 3 floating fragment(s)",
     "outsole: removed 16 floating fragment(s)"
   ],
   "mechanism": {
@@ -1150,12 +1188,12 @@
     "lacing guide bore 15 open, min clearance mm": 1.1,
     "dial L1 line length incl. guides mm": 230.0,
     "dial L2 line length incl. guides mm": 245.0,
-    "dial L3 line length incl. guides mm": 262.0,
+    "dial L3 line length incl. guides mm": 256.0,
     "throat slot open from footbed to top, min clearance mm": 2.0,
-    "tongue (sliding part) vs shoe min clearance mm": 0.56,
+    "tongue (sliding part) vs shoe min clearance mm": 0.57,
     "tongue glue flap distance to vamp, max mm": 0.0
   },
-  "elapsed_s": 271.2,
+  "elapsed_s": 511.8,
   "dial_frames": [
     {
       "name": "L1",
