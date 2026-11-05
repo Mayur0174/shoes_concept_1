@@ -116,13 +116,14 @@ def _fast_simplify(m, target_faces):
 
 
 def _manifold_simplify(m, target_faces):
-    """Manifold-preserving simplification: raise tolerance until under target."""
+    """Manifold-preserving simplification.  The face count is not monotonic
+    in the tolerance, so keep the smallest valid result."""
     man = to_manifold(m)
     best = None
     tol = 0.02
     for _ in range(14):
         r = from_manifold(man.simplify(tol))
-        if _ok(r):
+        if _ok(r) and (best is None or len(r.faces) < len(best.faces)):
             best = r
             if len(r.faces) <= target_faces * 1.15:
                 return r
@@ -149,9 +150,18 @@ def decimate(m, target_faces):
             return d
     except Exception as e:  # noqa: BLE001
         print("quadric decimate failed:", e)
-    # 2) manifold3d simplify (topology safe)
+    # 2) manifold3d simplify (topology safe), then a gentle quadric finish on
+    #    the smaller mesh if it is still above target
     try:
         d = _manifold_simplify(m, target_faces)
+        if _ok(d) and len(d.faces) > target_faces * 1.5:
+            for _ in range(4):
+                nd = _fast_simplify(d, max(target_faces, int(len(d.faces) * 0.6)))
+                if not _ok(nd):
+                    break
+                d = nd
+                if len(d.faces) <= target_faces * 1.1:
+                    break
         if _ok(d):
             return d
     except Exception as e:  # noqa: BLE001

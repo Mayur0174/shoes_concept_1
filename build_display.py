@@ -132,9 +132,11 @@ def export_display_step(parts, exact, p, out):
         pieces = mesh.split(only_watertight=False) if name == "webbing" else [mesh]
         solids = []
         for k, piece in enumerate(pieces):
-            dm = M.decimate(piece, max(2000, int(tgt / len(pieces))))
-            if dm is None:
-                B.WARN.append(f"display STEP: {name} could not be decimated; skipped")
+            t_k = max(2000, int(tgt / len(pieces)))
+            dm = M.decimate(piece, t_k)
+            if dm is None or len(dm.faces) > 3 * t_k:
+                # never hand a huge mesh to the STEP converter (memory)
+                B.log(f"display STEP: {name}[{k}] could not be reduced to ~{t_k} facets; skipped")
                 continue
             t = time.time()
             solids.append(cq.Shape.cast(M.mesh_to_occ_solid(dm)))
