@@ -45,7 +45,7 @@ def solid_colors(n, hexcol):
     return np.tile(hex2rgb(hexcol), (n, 1))
 
 
-def dial_colors(V, frame, origin, kind):
+def dial_colors(V, frame, origin, kind, cap_top=19.6, cap_r=7.5):
     q = V - np.asarray(origin)
     lx, ly, lz = q @ frame.ex, q @ frame.ey, q @ frame.ez
     if kind == "housing":
@@ -53,7 +53,7 @@ def dial_colors(V, frame, origin, kind):
     if kind == "spool":
         return solid_colors(len(V), "#333436")
     C = solid_colors(len(V), "#232425")
-    cap = (np.hypot(lx, ly) < 7.6) & (lz > 18.5)
+    cap = (np.hypot(lx, ly) < cap_r + 0.1) & (lz > cap_top - 1.1)
     C[cap] = hex2rgb("#8d9094")
     return C
 
@@ -206,7 +206,7 @@ def contact_sheet(views, path, title):
     plt.close(fig)
 
 
-def mechanism_sheet(housing, spool, knob, path, lift=3.2):
+def mechanism_sheet(housing, spool, knob, path, lift=3.2, z_groove=10.0):
     """2D sections of the dial mechanism: ratchet layer, spool layer, and
     vertical half-sections in the engaged and released positions."""
     import matplotlib
@@ -236,8 +236,8 @@ def mechanism_sheet(housing, spool, knob, path, lift=3.2):
                  "turn clockwise = tighten (clicks), counter-clockwise = locked")
     ax = axs[0, 1]
     for m_, c_ in parts:
-        draw(ax, m_, [0, 0, 10.0], [0, 0, 1], c_, top)
-    ax.set_title("Cable groove (z = 10 mm): ports and knot holes")
+        draw(ax, m_, [0, 0, z_groove], [0, 0, 1], c_, top)
+    ax.set_title("Cable groove (z = %.1f mm): ports and knot holes" % z_groove)
     for ax, sh, ttl in ((axs[1, 0], 0.0, "Half-section, knob pushed DOWN: engaged"),
                         (axs[1, 1], lift, "Half-section, knob pulled UP %.1f mm: released" % lift)):
         draw(ax, housing, [0, 0.8, 0], [0, 1, 0], H, side)

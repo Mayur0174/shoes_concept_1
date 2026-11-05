@@ -291,7 +291,9 @@ def main():
     laces_C = RD.solid_colors(len(laces_p.vertices), "#ebe5d4")
     dial_parts = []
     for d, kind, tm in dial_meshes:
-        C = RD.dial_colors(np.asarray(tm.vertices), d["frame"], d["origin"], kind)
+        si = model.seat_info
+        C = RD.dial_colors(np.asarray(tm.vertices), d["frame"], d["origin"], kind,
+                           cap_top=si["knob_z"] + si["knob_t"], cap_r=si["cap_r"])
         dial_parts.append((np.asarray(tm.vertices), np.asarray(tm.faces), C))
     color_parts = [(np.asarray(body_p.vertices), np.asarray(body_p.faces), body_C),
                    (np.asarray(outsole_p.vertices), np.asarray(outsole_p.faces), outsole_C),
@@ -316,7 +318,7 @@ def main():
         RD.contact_sheet(views, "renders/contact_sheet.png",
                          "Soletta trail shoe  |  dial side + strap side  |  %s quality" % quality)
         render_parts(outsole_p, outsole_C)
-    mech_sheet(local["housing"], local["spool"], local["knob"])
+    mech_sheet(local["housing"], local["spool"], local["knob"], model.seat_info["port_z"] - 0.4)
 
     # ---------------------------------------------------------------- report
     def write_report():
@@ -449,8 +451,8 @@ def function_checks(model, prof, buckle_meshes=(), tongue=None):
 
 
 @optional("mechanism sheet")
-def mech_sheet(housing, spool, knob):
-    return RD.mechanism_sheet(housing, spool, knob, "renders/dial_mechanism_sections.png")
+def mech_sheet(housing, spool, knob, z_groove=10.0):
+    return RD.mechanism_sheet(housing, spool, knob, "renders/dial_mechanism_sections.png", z_groove=z_groove)
 
 
 @optional("rendering")
