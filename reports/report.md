@@ -1,11 +1,11 @@
 # Soletta CAD build report (full quality)
 
-Elapsed: 441.8 s. Grid resolution (mm): {'body': 0.35, 'outsole': 0.25, 'laces': 0.22}
+Elapsed: 457.4 s. Grid resolution (mm): {'body': 0.35, 'outsole': 0.25, 'laces': 0.22}
 
 | Component | Triangles | Watertight | Winding OK | Bodies | Volume (cm3) | Extents (mm) | Overhang >45 deg |
 |---|---|---|---|---|---|---|---|
-| body | 3,845,644 | True | True | 1 | 822.4 | 298.4 x 125.3 x 106.9 | 17.8% |
-| outsole | 2,441,034 | True | True | 1 | 114.6 | 291.8 x 106.4 x 22.8 | 23.8% |
+| body | 3,451,112 | True | True | 1 | 951.0 | 298.4 x 125.3 x 106.9 | 13.4% |
+| outsole | 2,522,666 | True | True | 1 | 120.9 | 291.8 x 106.4 x 22.8 | 25.9% |
 | laces | 660,612 | True | True | 1 | 14.9 | 101.1 x 49.1 x 41.2 | 14.6% |
 | tongue as fitted (separate part) | 823,044 | True | True | 1 | 23.3 | 133.0 x 44.0 x 55.2 | 30.7% |
 | tongue, flat print | 466 | True | True | 1 | 15.3 | 172.4 x 34.0 x 5.0 | 0.0% |
@@ -14,13 +14,13 @@ Elapsed: 441.8 s. Grid resolution (mm): {'body': 0.35, 'outsole': 0.25, 'laces':
 | dial spool (each) | 6,560 | True | True | 1 | 1.6 | 21.6 x 21.6 x 10.7 | 4.7% |
 | dial knob (each) | 14,088 | True | True | 1 | 2.2 | 26.0 x 26.0 x 4.9 | 6.3% |
 | strap buckle (each) | 1,764 | True | True | 1 | 0.8 | 14.4 x 23.2 x 9.2 | 18.0% |
-| printable shoe (body+outsole), reloaded STL | 847,224 | True | True | 1 | 932.7 | 298.4 x 125.3 x 114.7 | 21.0% |
+| printable shoe (body+outsole), reloaded STL | 785,884 | True | True | 1 | 1067.1 | 298.4 x 125.3 x 114.7 | 17.5% |
 
 ## Body wall thickness (SDF ray sampling)
 
 | samples | p01 | p05 | median | share < 2.5 mm |
 |---|---|---|---|---|
-| 3691 | 1.45 | 2.15 | 5.35 | 25.68% |
+| 3448 | 1.35 | 2.15 | 4.65 | 32.13% |
 
 Thin samples are expected on the cable channel sheaths (4 mm tube, 1.6 mm bore), the inner tongue, guide clips and eyelet rims, which are features rather than walls.
 

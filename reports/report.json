@@ -36,36 +36,12 @@
       "perimeter_lug_gap": 5.0,
       "chevron_width": 7.0,
       "lug_edge_round": 0.6,
-      "texture_depth": 0.5
+      "texture_depth": 0.5,
+      "closed_midfoot": true
     },
     "midsole": {
       "chamber_fillet": 3.0,
-      "chambers": [
-        {
-          "name": "rear",
-          "x": 50.0,
-          "z": 21.0,
-          "half_length": 30.0,
-          "half_height": 7.5,
-          "tilt_deg": 0.0
-        },
-        {
-          "name": "central",
-          "x": 128.0,
-          "z": 19.0,
-          "half_length": 22.0,
-          "half_height": 6.5,
-          "tilt_deg": -10.0
-        },
-        {
-          "name": "front",
-          "x": 172.0,
-          "z": 17.0,
-          "half_length": 13.0,
-          "half_height": 4.5,
-          "tilt_deg": -6.0
-        }
-      ]
+      "chambers": []
     },
     "upper": {
       "inset_from_sole": 1.5,
@@ -235,14 +211,14 @@
   "components": [
     {
       "name": "body",
-      "triangles": 3845644,
-      "vertices": 1922744,
+      "triangles": 3451112,
+      "vertices": 1725490,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 822424.6285927901,
-      "area_mm2": 186092.02773947996,
+      "volume_mm3": 950968.0899892651,
+      "area_mm2": 166625.59529047302,
       "bodies": 1,
-      "euler": -78,
+      "euler": -66,
       "bounds_mm": [
         [
           -5.08,
@@ -260,26 +236,26 @@
         125.33,
         106.89
       ],
-      "overhang_area_fraction_gt45": 0.17783313306106968,
+      "overhang_area_fraction_gt45": 0.13434133653415,
       "wall_thickness": {
-        "samples": 3691,
-        "p01": 1.45,
+        "samples": 3448,
+        "p01": 1.35,
         "p05": 2.15,
-        "median": 5.35,
-        "frac_below_2_5mm": 0.2568,
-        "points_below_2_5mm": 948
+        "median": 4.65,
+        "frac_below_2_5mm": 0.3213,
+        "points_below_2_5mm": 1108
       }
     },
     {
       "name": "outsole",
-      "triangles": 2441034,
-      "vertices": 1220507,
+      "triangles": 2522666,
+      "vertices": 1261335,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 114576.62389325582,
-      "area_mm2": 63212.116287565455,
+      "volume_mm3": 120898.94726630031,
+      "area_mm2": 66317.56495144058,
       "bodies": 1,
-      "euler": -10,
+      "euler": 2,
       "bounds_mm": [
         [
           -0.95,
@@ -297,7 +273,7 @@
         106.37,
         22.82
       ],
-      "overhang_area_fraction_gt45": 0.2376228188535556
+      "overhang_area_fraction_gt45": 0.25887330757634636
     },
     {
       "name": "laces",
@@ -533,14 +509,14 @@
     },
     {
       "name": "printable shoe (body+outsole), reloaded STL",
-      "triangles": 847224,
-      "vertices": 423534,
+      "triangles": 785884,
+      "vertices": 392876,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 932667.8742183372,
-      "area_mm2": 205076.87189970943,
+      "volume_mm3": 1067053.3120316549,
+      "area_mm2": 184143.03659587022,
       "bodies": 1,
-      "euler": -78,
+      "euler": -66,
       "bounds_mm": [
         [
           -5.08,
@@ -558,7 +534,7 @@
         125.33,
         114.69
       ],
-      "overhang_area_fraction_gt45": 0.21024234309702455
+      "overhang_area_fraction_gt45": 0.17533731952421297
     }
   ],
   "warnings": [
@@ -607,7 +583,7 @@
     125.0,
     127.0
   ],
-  "elapsed_s": 441.8,
+  "elapsed_s": 457.4,
   "dial_frames": [
     {
       "name": "L1",
