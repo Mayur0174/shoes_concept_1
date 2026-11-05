@@ -10,9 +10,9 @@
     "length": 290.0,
     "max_width": 110.0,
     "height": 115.0,
-    "heel_height": 48.0,
-    "forefoot_height": 32.0,
-    "toe_spring": 15.0,
+    "heel_height": 34.0,
+    "forefoot_height": 24.0,
+    "toe_spring": 20.0,
     "resolution": {
       "planform_map": 0.25,
       "draft": {
@@ -28,44 +28,51 @@
     },
     "outsole": {
       "base_thickness": 3.0,
-      "perimeter_lug_height": 5.0,
-      "chevron_lug_depth": 4.0,
+      "perimeter_lug_height": 5.5,
+      "chevron_lug_depth": 5.0,
       "center_pad_height": 3.0,
-      "perimeter_band_width": 16.0,
-      "perimeter_lug_pitch": 15.5,
+      "perimeter_band_width": 17.0,
+      "perimeter_lug_pitch": 16.0,
       "perimeter_lug_gap": 5.0,
-      "chevron_width": 7.0,
+      "chevron_width": 9.0,
       "lug_edge_round": 0.6,
       "texture_depth": 0.5,
       "closed_midfoot": true
     },
     "midsole": {
-      "chamber_fillet": 3.0,
+      "chamber_fillet": 4.0,
       "chambers": []
     },
     "upper": {
-      "inset_from_sole": 1.5,
-      "wrap_thickness": 3.0,
-      "lace_panel_thickness": 1.5,
+      "inset_from_sole": 4.0,
+      "wrap_thickness": 3.5,
+      "lace_panel_thickness": 2.6,
       "quarter_panel_thickness": 1.0,
-      "throat_x": 102.0,
+      "throat_x": 100.0,
       "inner_wall": 2.2,
       "slot_x": [
-        96.0,
+        100.0,
         202.0
       ],
-      "slot_width": 20.0,
+      "slot_width": 30.0,
       "tongue": {
         "gap": 1.0,
-        "thickness": 2.2,
+        "thickness": 3.0,
         "x": [
           84.0,
-          208.0
+          210.0
         ],
-        "half_width": 24.0,
-        "z_max": 122.0,
+        "half_width": 26.0,
+        "z_max": 126.0,
         "glue_flap": 15.0,
         "pad_thickness": 5.0,
+        "pad_dx": 4.0,
+        "pad_drop": 2.0,
+        "pad_half_len": 14.0,
+        "pad_half_width": 22.0,
+        "pad_half_thick": 8.0,
+        "pad_round": 7.5,
+        "pad_angle": 78.0,
         "center_strip": {
           "width": 16.0,
           "thickness": 1.4
@@ -75,7 +82,8 @@
     "heel": {
       "pull_tab_height": 33.0,
       "pull_tab_width": 22.0,
-      "pull_tab_thickness": 3.6
+      "pull_tab_thickness": 3.6,
+      "pull_tab": false
     },
     "dials": {
       "diameter": 32.0,
@@ -86,15 +94,15 @@
       "positions_xz": [
         [
           177.0,
-          37.0
+          42.0
         ],
         [
-          128.0,
-          41.0
+          122.0,
+          52.0
         ],
         [
-          58.0,
-          54.0
+          54.0,
+          69.0
         ]
       ],
       "pod_height": 2.5,
@@ -147,15 +155,15 @@
       "targets_xz": [
         [
           185.0,
-          82.0
+          78.0
         ],
         [
-          146.0,
-          92.0
+          147.0,
+          93.0
         ],
         [
-          112.0,
-          99.0
+          115.0,
+          105.0
         ]
       ],
       "strap_width": 8.0,
@@ -232,15 +240,635 @@
           "dial": 1,
           "x": [
             158,
-            134
+            136
           ]
         },
         {
           "dial": 2,
           "x": [
-            122,
-            102
+            124,
+            106
           ]
+        }
+      ]
+    },
+    "shape": "photo",
+    "note": "Printable, working shoe in the photo-matched shape (profiles shared with params_display.json).",
+    "tables": {
+      "HEEL_ROUND": 52.0,
+      "TOE_ROUND": 93.0,
+      "HW_CTRL": [
+        [
+          0,
+          58
+        ],
+        [
+          40,
+          58
+        ],
+        [
+          60,
+          58
+        ],
+        [
+          80,
+          57.5
+        ],
+        [
+          100,
+          56.5
+        ],
+        [
+          130,
+          57.5
+        ],
+        [
+          160,
+          59.5
+        ],
+        [
+          190,
+          62.5
+        ],
+        [
+          215,
+          63
+        ],
+        [
+          240,
+          63
+        ],
+        [
+          290,
+          63
+        ]
+      ],
+      "CY_CTRL": [
+        [
+          0,
+          0
+        ],
+        [
+          290,
+          0
+        ]
+      ],
+      "HEEL_BEVEL_CTRL": [
+        [
+          -10,
+          18
+        ],
+        [
+          0,
+          14
+        ],
+        [
+          5,
+          10
+        ],
+        [
+          10,
+          5
+        ],
+        [
+          18,
+          1.5
+        ],
+        [
+          28,
+          0
+        ],
+        [
+          300,
+          0
+        ]
+      ],
+      "TOE_SPRING_SHAPE": [
+        [
+          -10,
+          0
+        ],
+        [
+          215,
+          0
+        ],
+        [
+          243,
+          0.08
+        ],
+        [
+          258,
+          0.23
+        ],
+        [
+          274,
+          0.45
+        ],
+        [
+          287,
+          0.95
+        ],
+        [
+          300,
+          1.1
+        ]
+      ],
+      "UPPER_TOP_CTRL": [
+        [
+          -10,
+          145
+        ],
+        [
+          80,
+          145
+        ],
+        [
+          92,
+          138
+        ],
+        [
+          100,
+          132
+        ],
+        [
+          112,
+          128
+        ],
+        [
+          125,
+          124
+        ],
+        [
+          136,
+          117
+        ],
+        [
+          148,
+          110
+        ],
+        [
+          161,
+          99
+        ],
+        [
+          174,
+          93
+        ],
+        [
+          186,
+          86
+        ],
+        [
+          199,
+          79
+        ],
+        [
+          211,
+          73
+        ],
+        [
+          224,
+          68
+        ],
+        [
+          236,
+          62
+        ],
+        [
+          249,
+          57
+        ],
+        [
+          262,
+          54
+        ],
+        [
+          274,
+          52
+        ],
+        [
+          284,
+          47
+        ],
+        [
+          290,
+          42
+        ],
+        [
+          300,
+          38
+        ]
+      ],
+      "COLLAR_CTRL": [
+        [
+          -10,
+          105
+        ],
+        [
+          0,
+          108
+        ],
+        [
+          10,
+          116
+        ],
+        [
+          23,
+          126
+        ],
+        [
+          35,
+          133
+        ],
+        [
+          48,
+          132
+        ],
+        [
+          61,
+          118
+        ],
+        [
+          73,
+          108
+        ],
+        [
+          86,
+          108
+        ],
+        [
+          96,
+          118
+        ],
+        [
+          102,
+          126
+        ],
+        [
+          110,
+          170
+        ],
+        [
+          125,
+          400
+        ],
+        [
+          300,
+          400
+        ]
+      ],
+      "WRAP_CTRL": [
+        [
+          -10,
+          80
+        ],
+        [
+          0,
+          84
+        ],
+        [
+          10,
+          88
+        ],
+        [
+          23,
+          88
+        ],
+        [
+          35,
+          81
+        ],
+        [
+          55,
+          70
+        ],
+        [
+          73,
+          58
+        ],
+        [
+          86,
+          48
+        ],
+        [
+          100,
+          42
+        ],
+        [
+          120,
+          38
+        ],
+        [
+          142,
+          34
+        ],
+        [
+          160,
+          30
+        ],
+        [
+          195,
+          27
+        ],
+        [
+          211,
+          25
+        ],
+        [
+          224,
+          30
+        ],
+        [
+          243,
+          40
+        ],
+        [
+          258,
+          44
+        ],
+        [
+          274,
+          45
+        ],
+        [
+          285,
+          42
+        ],
+        [
+          290,
+          39
+        ],
+        [
+          300,
+          38
+        ]
+      ],
+      "PANEL_CTRL": [
+        [
+          80,
+          30
+        ],
+        [
+          94,
+          31
+        ],
+        [
+          110,
+          32
+        ],
+        [
+          150,
+          32
+        ],
+        [
+          190,
+          31
+        ],
+        [
+          204,
+          28
+        ],
+        [
+          212,
+          22
+        ],
+        [
+          218,
+          12
+        ],
+        [
+          221,
+          0.1
+        ],
+        [
+          300,
+          0.1
+        ]
+      ],
+      "TWALL_CTRL": [
+        [
+          -10,
+          5
+        ],
+        [
+          50,
+          5
+        ],
+        [
+          100,
+          4.5
+        ],
+        [
+          300,
+          4
+        ]
+      ],
+      "HEEL_RECEDE": [
+        [
+          -10,
+          20
+        ],
+        [
+          5,
+          14
+        ],
+        [
+          14,
+          7
+        ],
+        [
+          24,
+          3.2
+        ],
+        [
+          33,
+          1
+        ],
+        [
+          42,
+          3
+        ],
+        [
+          52,
+          10
+        ],
+        [
+          61,
+          10
+        ],
+        [
+          71,
+          12
+        ],
+        [
+          80,
+          17.6
+        ],
+        [
+          89,
+          18.6
+        ],
+        [
+          99,
+          18.6
+        ],
+        [
+          108,
+          22.7
+        ],
+        [
+          118,
+          26.4
+        ],
+        [
+          127,
+          29.6
+        ],
+        [
+          150,
+          36
+        ]
+      ],
+      "UPPER_INSET_CTRL": [
+        [
+          -10,
+          3
+        ],
+        [
+          15,
+          4
+        ],
+        [
+          40,
+          6.5
+        ],
+        [
+          80,
+          7.5
+        ],
+        [
+          160,
+          7.5
+        ],
+        [
+          215,
+          6.5
+        ],
+        [
+          245,
+          5.0
+        ],
+        [
+          275,
+          5.5
+        ],
+        [
+          300,
+          6
+        ]
+      ]
+    },
+    "display_features": {
+      "tub": {
+        "bulge": 4.5,
+        "lip_radius": 4.5,
+        "heel_recede_offset": 0.5
+      },
+      "collar": {
+        "radius": 7.0,
+        "x_range": [
+          16.0,
+          90.0
+        ],
+        "step": 3.0,
+        "radius_by_x": [
+          [
+            0,
+            10.5
+          ],
+          [
+            30,
+            10.5
+          ],
+          [
+            55,
+            9.0
+          ],
+          [
+            75,
+            7.0
+          ],
+          [
+            95,
+            6.0
+          ]
+        ]
+      },
+      "heel_badge": {
+        "z": 100.0,
+        "radius": 12.0,
+        "thickness": 3.0
+      },
+      "grooves": [
+        {
+          "xz": [
+            [
+              236,
+              19
+            ],
+            [
+              215,
+              19
+            ],
+            [
+              190,
+              20
+            ],
+            [
+              160,
+              22
+            ],
+            [
+              130,
+              25
+            ],
+            [
+              100,
+              30
+            ],
+            [
+              75,
+              36
+            ],
+            [
+              50,
+              42
+            ],
+            [
+              28,
+              47
+            ]
+          ],
+          "radius": 3.6,
+          "depth": 2.0
+        },
+        {
+          "xz": [
+            [
+              250,
+              15
+            ],
+            [
+              225,
+              13
+            ],
+            [
+              205,
+              14
+            ]
+          ],
+          "radius": 2.0,
+          "depth": 1.2
         }
       ]
     },
@@ -249,98 +877,98 @@
   "components": [
     {
       "name": "body",
-      "triangles": 3292324,
-      "vertices": 1646144,
+      "triangles": 4172720,
+      "vertices": 2086350,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 938256.5032699519,
-      "area_mm2": 160077.47807778197,
+      "volume_mm3": 1075549.0869438532,
+      "area_mm2": 194200.83046925694,
       "bodies": 1,
-      "euler": -18,
+      "euler": -10,
       "bounds_mm": [
         [
-          -5.08,
-          -57.71,
-          8.0
+          -2.3,
+          -67.39,
+          6.74
         ],
         [
-          293.33,
-          65.97,
-          114.89
+          293.41,
+          73.05,
+          138.3
         ]
       ],
       "extents_mm": [
-        298.41,
-        123.68,
-        106.89
+        295.71,
+        140.44,
+        131.56
       ],
-      "overhang_area_fraction_gt45": 0.12794386367713811,
+      "overhang_area_fraction_gt45": 0.1094812247285471,
       "wall_thickness": {
-        "samples": 3442,
+        "samples": 3647,
         "p01": 1.55,
-        "p05": 2.15,
-        "median": 4.55,
-        "frac_below_2_5mm": 0.3803,
-        "points_below_2_5mm": 1309
+        "p05": 2.25,
+        "median": 10.05,
+        "frac_below_2_5mm": 0.2879,
+        "points_below_2_5mm": 1050
       }
     },
     {
       "name": "outsole",
-      "triangles": 2522666,
-      "vertices": 1261335,
+      "triangles": 3019990,
+      "vertices": 1509997,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 120898.94726630031,
-      "area_mm2": 66317.56495144058,
+      "volume_mm3": 151439.36479573234,
+      "area_mm2": 80805.57964881303,
       "bodies": 1,
       "euler": 2,
       "bounds_mm": [
         [
           -0.95,
-          -50.93,
+          -57.44,
           0.0
         ],
         [
-          290.83,
-          55.44,
-          22.82
+          290.96,
+          63.66,
+          28.25
         ]
       ],
       "extents_mm": [
-        291.78,
-        106.37,
-        22.82
+        291.92,
+        121.1,
+        28.25
       ],
-      "overhang_area_fraction_gt45": 0.25887330757634636
+      "overhang_area_fraction_gt45": 0.26210494135754764
     },
     {
       "name": "tongue as fitted (separate part)",
-      "triangles": 1103590,
-      "vertices": 551793,
+      "triangles": 981068,
+      "vertices": 490536,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 29485.699789932918,
-      "area_mm2": 19140.395469170817,
+      "volume_mm3": 33126.152219891,
+      "area_mm2": 16703.457236860635,
       "bodies": 1,
-      "euler": -2,
+      "euler": 2,
       "bounds_mm": [
         [
-          84.0,
-          -23.71,
-          66.48
+          90.26,
+          -25.59,
+          63.5
         ],
         [
           217.0,
-          26.27,
-          121.71
+          25.59,
+          130.43
         ]
       ],
       "extents_mm": [
-        133.0,
-        49.98,
-        55.22
+        126.74,
+        51.18,
+        66.93
       ],
-      "overhang_area_fraction_gt45": 0.329097675821293
+      "overhang_area_fraction_gt45": 0.3951699617730352
     },
     {
       "name": "tongue, flat print",
@@ -348,8 +976,8 @@
       "vertices": 312,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 24712.75411602225,
-      "area_mm2": 18236.441970456355,
+      "volume_mm3": 33691.632721481634,
+      "area_mm2": 20588.002552761503,
       "bodies": 1,
       "euler": 2,
       "bounds_mm": [
@@ -359,14 +987,14 @@
           0.0
         ],
         [
-          172.45,
-          48.0,
+          178.64,
+          52.0,
           5.0
         ]
       ],
       "extents_mm": [
-        172.45,
-        48.0,
+        178.64,
+        52.0,
         5.0
       ],
       "overhang_area_fraction_gt45": 0.0
@@ -460,37 +1088,37 @@
     },
     {
       "name": "printable shoe (body+outsole), reloaded STL",
-      "triangles": 1231344,
-      "vertices": 615654,
+      "triangles": 1202550,
+      "vertices": 601265,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 1054309.0720097742,
-      "area_mm2": 177595.22847670282,
+      "volume_mm3": 1168842.4468114742,
+      "area_mm2": 213316.2916398547,
       "bodies": 1,
-      "euler": -18,
+      "euler": -10,
       "bounds_mm": [
         [
-          -5.08,
-          -57.71,
+          -2.3,
+          -67.39,
           0.2
         ],
         [
-          293.33,
-          65.97,
-          114.89
+          293.41,
+          73.05,
+          138.3
         ]
       ],
       "extents_mm": [
-        298.41,
-        123.68,
-        114.69
+        295.71,
+        140.44,
+        138.1
       ],
-      "overhang_area_fraction_gt45": 0.17122482321913243
+      "overhang_area_fraction_gt45": 0.17202505985424027
     }
   ],
   "warnings": [
-    "outsole: removed 7 floating fragment(s)",
-    "tongue: removed 2 floating fragment(s)"
+    "body: removed 6 floating fragment(s)",
+    "outsole: removed 16 floating fragment(s)"
   ],
   "mechanism": {
     "spool_vs_knob_mm3": 0.0,
@@ -520,54 +1148,54 @@
     "lacing guide bore 13 open, min clearance mm": 1.1,
     "lacing guide bore 14 open, min clearance mm": 1.1,
     "lacing guide bore 15 open, min clearance mm": 1.1,
-    "dial L1 line length incl. guides mm": 219.0,
-    "dial L2 line length incl. guides mm": 218.0,
-    "dial L3 line length incl. guides mm": 280.0,
+    "dial L1 line length incl. guides mm": 230.0,
+    "dial L2 line length incl. guides mm": 245.0,
+    "dial L3 line length incl. guides mm": 262.0,
     "throat slot open from footbed to top, min clearance mm": 2.0,
-    "tongue (sliding part) vs shoe min clearance mm": 0.6,
+    "tongue (sliding part) vs shoe min clearance mm": 0.56,
     "tongue glue flap distance to vamp, max mm": 0.0
   },
-  "elapsed_s": 391.3,
+  "elapsed_s": 271.2,
   "dial_frames": [
     {
       "name": "L1",
       "origin": [
-        175.73,
-        70.01,
-        35.11
+        176.03,
+        76.94,
+        41.55
       ],
       "axis": [
-        -0.055,
-        0.995,
-        -0.082
+        -0.042,
+        0.999,
+        -0.02
       ],
-      "seat_height": 6.99
+      "seat_height": 7.0
     },
     {
       "name": "L2",
       "origin": [
-        127.96,
-        63.28,
-        40.98
+        121.63,
+        72.41,
+        51.35
       ],
       "axis": [
-        -0.002,
-        1.0,
-        -0.001
+        -0.016,
+        0.999,
+        -0.028
       ],
-      "seat_height": 3.9
+      "seat_height": 7.0
     },
     {
       "name": "L3",
       "origin": [
-        57.73,
-        62.2,
-        52.05
+        56.95,
+        76.7,
+        80.36
       ],
       "axis": [
-        -0.012,
-        0.996,
-        -0.085
+        0.128,
+        0.86,
+        0.494
       ],
       "seat_height": 7.0
     }

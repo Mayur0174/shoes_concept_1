@@ -1,23 +1,23 @@
 # Soletta CAD build report (full quality)
 
-Elapsed: 391.3 s. Grid resolution (mm): {'body': 0.35, 'outsole': 0.25, 'laces': 0.22}
+Elapsed: 271.2 s. Grid resolution (mm): {'body': 0.35, 'outsole': 0.25, 'laces': 0.22}
 
 | Component | Triangles | Watertight | Winding OK | Bodies | Volume (cm3) | Extents (mm) | Overhang >45 deg |
 |---|---|---|---|---|---|---|---|
-| body | 3,292,324 | True | True | 1 | 938.3 | 298.4 x 123.7 x 106.9 | 12.8% |
-| outsole | 2,522,666 | True | True | 1 | 120.9 | 291.8 x 106.4 x 22.8 | 25.9% |
-| tongue as fitted (separate part) | 1,103,590 | True | True | 1 | 29.5 | 133.0 x 50.0 x 55.2 | 32.9% |
-| tongue, flat print | 620 | True | True | 1 | 24.7 | 172.4 x 48.0 x 5.0 | 0.0% |
+| body | 4,172,720 | True | True | 1 | 1075.5 | 295.7 x 140.4 x 131.6 | 10.9% |
+| outsole | 3,019,990 | True | True | 1 | 151.4 | 291.9 x 121.1 x 28.2 | 26.2% |
+| tongue as fitted (separate part) | 981,068 | True | True | 1 | 33.1 | 126.7 x 51.2 x 66.9 | 39.5% |
+| tongue, flat print | 620 | True | True | 1 | 33.7 | 178.6 x 52.0 x 5.0 | 0.0% |
 | dial housing (each) | 8,790 | True | True | 1 | 2.7 | 30.6 x 33.4 x 11.0 | 0.3% |
 | dial spool (each) | 6,560 | True | True | 1 | 1.6 | 21.6 x 21.6 x 10.7 | 4.7% |
 | dial knob (each) | 14,088 | True | True | 1 | 2.2 | 26.0 x 26.0 x 4.9 | 6.3% |
-| printable shoe (body+outsole), reloaded STL | 1,231,344 | True | True | 1 | 1054.3 | 298.4 x 123.7 x 114.7 | 17.1% |
+| printable shoe (body+outsole), reloaded STL | 1,202,550 | True | True | 1 | 1168.8 | 295.7 x 140.4 x 138.1 | 17.2% |
 
 ## Body wall thickness (SDF ray sampling)
 
 | samples | p01 | p05 | median | share < 2.5 mm |
 |---|---|---|---|---|
-| 3442 | 1.55 | 2.15 | 4.55 | 38.03% |
+| 3647 | 1.55 | 2.25 | 10.05 | 28.79% |
 
 Thin samples are expected on the cable channel sheaths (4 mm tube, 1.6 mm bore), the inner tongue, guide clips and eyelet rims, which are features rather than walls.
 
@@ -40,11 +40,11 @@ Thin samples are expected on the cable channel sheaths (4 mm tube, 1.6 mm bore),
 | lacing guide bore 13 open, min clearance mm | 1.1 |
 | lacing guide bore 14 open, min clearance mm | 1.1 |
 | lacing guide bore 15 open, min clearance mm | 1.1 |
-| dial L1 line length incl. guides mm | 219.0 |
-| dial L2 line length incl. guides mm | 218.0 |
-| dial L3 line length incl. guides mm | 280.0 |
+| dial L1 line length incl. guides mm | 230.0 |
+| dial L2 line length incl. guides mm | 245.0 |
+| dial L3 line length incl. guides mm | 262.0 |
 | throat slot open from footbed to top, min clearance mm | 2.0 |
-| tongue (sliding part) vs shoe min clearance mm | 0.6 |
+| tongue (sliding part) vs shoe min clearance mm | 0.56 |
 | tongue glue flap distance to vamp, max mm | 0.0 |
 
 ## Dial mechanism checks (exact B-rep)
@@ -66,11 +66,11 @@ Thin samples are expected on the cable channel sheaths (4 mm tube, 1.6 mm bore),
 
 | Dial | Origin (mm) | Axis | Seat height |
 |---|---|---|---|
-| L1 | [175.73, 70.01, 35.11] | [-0.055, 0.995, -0.082] | 6.99 |
-| L2 | [127.96, 63.28, 40.98] | [-0.002, 1.0, -0.001] | 3.9 |
-| L3 | [57.73, 62.2, 52.05] | [-0.012, 0.996, -0.085] | 7.0 |
+| L1 | [176.03, 76.94, 41.55] | [-0.042, 0.999, -0.02] | 7.0 |
+| L2 | [121.63, 72.41, 51.35] | [-0.016, 0.999, -0.028] | 7.0 |
+| L3 | [56.95, 76.7, 80.36] | [0.128, 0.86, 0.494] | 7.0 |
 
 ## Warnings
 
-- outsole: removed 7 floating fragment(s)
-- tongue: removed 2 floating fragment(s)
+- body: removed 6 floating fragment(s)
+- outsole: removed 16 floating fragment(s)
