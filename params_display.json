@@ -34,62 +34,12 @@
   "perimeter_lug_gap": 5.0,
   "chevron_width": 9.0,
   "lug_edge_round": 0.6,
-  "texture_depth": 0.5
+  "texture_depth": 0.5,
+  "closed_midfoot": true
  },
  "midsole": {
   "chamber_fillet": 4.0,
-  "chambers": [
-   {
-    "name": "heel",
-    "x": 46.0,
-    "z": 28.5,
-    "half_length": 27.0,
-    "half_height": 9.0,
-    "tilt_deg": -2.0,
-    "depth": 14.0,
-    "fillet": 3.5
-   },
-   {
-    "name": "mid",
-    "x": 134.0,
-    "z": 16.0,
-    "half_length": 15.0,
-    "half_height": 8.0,
-    "tilt_deg": 4.0,
-    "depth": 12.0,
-    "fillet": 3.0
-   },
-   {
-    "name": "front",
-    "x": 183.0,
-    "z": 11.0,
-    "half_length": 21.0,
-    "half_height": 4.6,
-    "tilt_deg": 0.0,
-    "depth": 11.0,
-    "fillet": 2.5
-   },
-   {
-    "name": "toe",
-    "x": 216.0,
-    "z": 13.5,
-    "half_length": 8.5,
-    "half_height": 2.8,
-    "tilt_deg": -6.0,
-    "depth": 8.0,
-    "fillet": 1.5
-   },
-   {
-    "name": "under_dial2",
-    "x": 123.0,
-    "z": 36.0,
-    "half_length": 14.0,
-    "half_height": 6.0,
-    "tilt_deg": -12.0,
-    "depth": 5.0,
-    "fillet": 3.0
-   }
-  ]
+  "chambers": []
  },
  "upper": {
   "inset_from_sole": 4.0,
@@ -782,59 +732,61 @@
     "xz": [
      [
       236,
-      26
+      19
      ],
      [
       215,
-      28
+      19
      ],
      [
       190,
-      30
+      20
      ],
      [
       160,
-      32
+      22
      ],
      [
       130,
-      34
+      25
      ],
      [
       100,
-      38
+      30
      ],
      [
       75,
-      42
+      36
      ],
      [
       50,
-      47
+      42
      ],
      [
       28,
-      51
+      47
      ]
     ],
-    "radius": 3.6
+    "radius": 3.6,
+    "depth": 2.0
    },
    {
     "xz": [
      [
       250,
-      20
+      15
      ],
      [
       225,
-      17.5
+      13
      ],
      [
       205,
-      19
+      14
      ]
     ],
-    "radius": 2.0
+    "radius": 2.0,
+    "depth": 1.2
    }
   ],
   "straps": {
@@ -1089,5 +1041,12 @@
    "lip_radius": 4.5,
    "heel_recede_offset": 0.5
   }
+ },
+ "step_display": {
+  "body": 45000,
+  "outsole": 30000,
+  "tongue": 6000,
+  "laces": 12000,
+  "webbing": 6000
  }
 }

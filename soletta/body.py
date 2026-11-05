@@ -136,6 +136,9 @@ def well_field(prof, X, Y, Z):
         d2 = prof.upper2d(X - s, Y) + prof.twall(X)
     else:
         d2 = prof.upper2d(X, Y) + prof.twall(X)
+    # never closer to the outside than the wall thickness (the upper narrows
+    # toward its bottom edge, where an outline-only well would cut through)
+    d2 = np.maximum(d2, upper_field(prof, X, Y, Z) + prof.twall(X))
     d2 = smax(d2, X - x_throat, 8.0)
     return smax(d2, prof.ztop(X) - Z, 2.0)
 

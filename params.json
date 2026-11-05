@@ -29,36 +29,12 @@
     "perimeter_lug_gap": 5.0,
     "chevron_width": 7.0,
     "lug_edge_round": 0.6,
-    "texture_depth": 0.5
+    "texture_depth": 0.5,
+    "closed_midfoot": true
   },
   "midsole": {
     "chamber_fillet": 3.0,
-    "chambers": [
-      {
-        "name": "rear",
-        "x": 50.0,
-        "z": 21.0,
-        "half_length": 30.0,
-        "half_height": 7.5,
-        "tilt_deg": 0.0
-      },
-      {
-        "name": "central",
-        "x": 128.0,
-        "z": 19.0,
-        "half_length": 22.0,
-        "half_height": 6.5,
-        "tilt_deg": -10.0
-      },
-      {
-        "name": "front",
-        "x": 172.0,
-        "z": 17.0,
-        "half_length": 13.0,
-        "half_height": 4.5,
-        "tilt_deg": -6.0
-      }
-    ]
+    "chambers": []
   },
   "upper": {
     "inset_from_sole": 1.5,

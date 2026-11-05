@@ -66,7 +66,8 @@ def build_outsole(prof):
         opening = smax(midzone, 2.2 - web, 1.5)
 
         # base plate (top flush with midsole bottom)
-        plate2d = smax(d2, -opening, 1.0)
+        # closed midfoot: the cells stay as recesses between the web ribs
+        plate2d = d2 if p.get("closed_midfoot", False) else smax(d2, -opening, 1.0)
         z_top = zg + per_h + base_t
         plate_z = np.maximum(zg + per_h + tex - Z, Z - z_top)
         out = round_intersect(plate2d, plate_z, 1.0)

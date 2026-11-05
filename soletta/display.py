@@ -93,7 +93,9 @@ def add_display_lateral(m, sc, prof, log=print):
             P, N, ok = _side_points(sc, sc.mark(), prof, _densify(g["xz"], 2.0), s_)
             P = P[ok]
             if len(P) >= 2:
-                sc.add("smooth_subtract", CapsuleChain(P + N[ok] * 0.0, g["radius"], "groove"), 1.2)
+                # centre the groove outside the skin so it is only `depth` deep
+                off = g["radius"] - g.get("depth", 2.0)
+                sc.add("smooth_subtract", CapsuleChain(P + N[ok] * off, g["radius"], "groove"), 1.2)
     upto = sc.mark()
 
     # ---- webbing straps ------------------------------------------------------

@@ -39,6 +39,7 @@ jobs:
           python build_display.py --res 0.4 --out out_display 2>&1 | grep -v slab | tee display_log.txt
           mkdir -p release
           cd out_display && zip -q -9 ../release/soletta_display_model.zip *.stl soletta_display.glb
+          cd step && zip -q -9 ../../release/soletta_display_STEP.zip *.step
 
       - name: Publish display release
         uses: softprops/action-gh-release@v2
@@ -47,5 +48,6 @@ jobs:
           name: Soletta display model ${{ github.run_number }} (photo-matched)
           body: |
             High-detail display model traced from the reference photos. It is for renders and viewing, not for printing; the printable, working shoe is in the build-N releases.
-            One STL per part (body, outsole, tongue, laces, dials, webbing, buckles) plus a combined GLB.
+            soletta_display_model.zip: one STL per part plus a combined GLB.
+            soletta_display_STEP.zip: soletta_display_assembly.step (named, coloured parts; organic parts as faceted solids, dials and buckles as exact solids) plus one STEP per part.
           files: release/*

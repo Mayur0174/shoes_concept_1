@@ -35,6 +35,7 @@ def main():
     ap.add_argument("--params", default="params_display.json")
     ap.add_argument("--res", type=float, default=None)
     ap.add_argument("--out", default="out_display")
+    ap.add_argument("--no-step", action="store_true", help="skip the STEP export")
     a = ap.parse_args()
     p = json.load(open(a.params))
     res = p["resolution"]["display"]
@@ -71,13 +72,19 @@ def main():
             bms.append(trimesh.Trimesh(V, F, process=True))
         parts["buckles"] = trimesh.util.concatenate(bms)
     dd = make_display_dial(p["display_features"]["dial"])
-    dms = []
+    dms, exact = [], {}
     for d in model.dials:
         fr = d["frame"]
         o = fr.world(0, 0, d["seat"])
-        V, F = tessellate(place(dd, o, fr.ez, fr.ex), 0.02, 0.12)
+        shp = place(dd, o, fr.ez, fr.ex)
+        exact[f"dial_{d['name']}"] = shp
+        V, F = tessellate(shp, 0.02, 0.12)
         dms.append(trimesh.Trimesh(V, F, process=True))
     parts["dials"] = trimesh.util.concatenate(dms)
+    if model.straps:
+        for i, st in enumerate(model.straps):
+            fr = st["buckle_frame"]
+            exact[f"buckle_{i + 1}"] = place(bq, fr.o, fr.ez, fr.ex)
 
     scene = trimesh.Scene()
     for k, m in parts.items():
@@ -89,7 +96,50 @@ def main():
         scene.add_geometry(mm, node_name=k, geom_name=k)
         B.log(f"{k}: {len(m.faces)} triangles, watertight={m.is_watertight}")
     scene.export(os.path.join(a.out, "soletta_display.glb"))
+    if not a.no_step:
+        export_display_step(parts, exact, p, a.out)
     B.log(f"display model done in {time.time() - T0:.0f}s")
+
+
+def export_display_step(parts, exact, p, out):
+    """STEP: organic parts as faceted B-rep solids, dials and buckles exact."""
+    import cadquery as cq
+    from soletta import meshing as M
+    sd = os.path.join(out, "step")
+    os.makedirs(sd, exist_ok=True)
+    targets = p.get("step_display", {"body": 90000, "outsole": 60000, "tongue": 12000,
+                                     "laces": 24000, "webbing": 12000})
+    tones = {"body": (0.66, 0.67, 0.69), "outsole": (0.20, 0.21, 0.22), "tongue": (0.58, 0.61, 0.63),
+             "laces": (0.87, 0.85, 0.82), "webbing": (0.40, 0.42, 0.44)}
+    assy = cq.Assembly(name="soletta_display")
+    for name, tgt in targets.items():
+        if name not in parts:
+            continue
+        mesh = parts[name]
+        pieces = mesh.split(only_watertight=False) if name == "webbing" else [mesh]
+        solids = []
+        for k, piece in enumerate(pieces):
+            dm = M.decimate(piece, max(2000, int(tgt / len(pieces))))
+            if dm is None:
+                B.WARN.append(f"display STEP: {name} could not be decimated; skipped")
+                continue
+            t = time.time()
+            solids.append(cq.Shape.cast(M.mesh_to_occ_solid(dm)))
+            B.log(f"display STEP: {name}[{k}] {len(dm.faces)} facets in {time.time() - t:.1f}s")
+        if not solids:
+            continue
+        shape = solids[0] if len(solids) == 1 else cq.Compound.makeCompound(solids)
+        shape.exportStep(os.path.join(sd, f"{name}.step"))
+        assy.add(shape, name=name, color=cq.Color(*tones[name]))
+    for name, shp in exact.items():
+        col = (0.25, 0.26, 0.27) if name.startswith("dial") else (0.09, 0.09, 0.10)
+        assy.add(shp, name=name, color=cq.Color(*col))
+    path = os.path.join(sd, "soletta_display_assembly.step")
+    if hasattr(assy, "export"):
+        assy.export(path)
+    else:
+        assy.save(path)
+    B.log("display STEP assembly written: " + path)
 
 
 if __name__ == "__main__":
