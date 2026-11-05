@@ -25,7 +25,7 @@ from soletta.dials import tessellate, place
 from soletta.display import make_display_dial
 
 GREYS = {  # clay tones per part, only to tell parts apart
-    "body": "#a6aaae", "outsole": "#3b3e41", "tongue": "#979da2", "laces": "#dedad2",
+    "body": "#a6aaae", "outsole": "#3b3e41", "tongue": "#979da2", "laces": "#202124",
     "dials": "#47494c", "webbing": "#6c7074", "buckles": "#2e3032",
 }
 
@@ -51,7 +51,7 @@ def main():
             P = np.asarray(P, float).reshape(-1, 3)
             return np.minimum(model.scene.points(P, upto), tongue_sc.points(P))
     model.drape_scene = _Drape()
-    lace_sc = build_laces(model, B.log)
+    lace_sc = None if p.get("lacing", {}).get("system") == "cable_guides" else build_laces(model, B.log)
 
     L = prof.L
     parts = {}
@@ -59,7 +59,9 @@ def main():
     parts["outsole"] = B.grid_mesh(build_outsole(prof), (-10, -78, -2), (L + 10, 78, 32),
                                    max(h * 0.75, 0.3), "outsole")
     parts["tongue"] = B.grid_mesh(tongue_sc, tongue_sc.domain[0], tongue_sc.domain[1], max(h * 0.75, 0.3), "tongue")
-    parts["laces"] = B.grid_mesh(lace_sc, lace_sc.domain[0], lace_sc.domain[1], max(h * 0.7, 0.3), "laces")
+    cable = p.get("lacing", {}).get("system") == "cable_guides"
+    if not cable:              # with cable lacing the line is fitted afterwards
+        parts["laces"] = B.grid_mesh(lace_sc, lace_sc.domain[0], lace_sc.domain[1], max(h * 0.7, 0.3), "laces")
     if model.straps:
         from soletta.straps import build_strap_display, make_buckle
         ws = build_strap_display(model, prof)
@@ -110,7 +112,7 @@ def export_display_step(parts, exact, p, out):
     targets = p.get("step_display", {"body": 90000, "outsole": 60000, "tongue": 12000,
                                      "laces": 24000, "webbing": 12000})
     tones = {"body": (0.66, 0.67, 0.69), "outsole": (0.20, 0.21, 0.22), "tongue": (0.58, 0.61, 0.63),
-             "laces": (0.87, 0.85, 0.82), "webbing": (0.40, 0.42, 0.44)}
+             "laces": (0.12, 0.12, 0.13), "webbing": (0.40, 0.42, 0.44)}
     assy = cq.Assembly(name="soletta_display")
     for name, tgt in targets.items():
         if name not in parts:

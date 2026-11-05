@@ -107,7 +107,7 @@ def add_display_lateral(m, sc, prof, log=print):
             sc.add("smooth_union", StrapChain(P, N, st["width"], st["thickness"], "cable", round_r=0.5), 0.4)
             m.display_straps.append(P)
     # straps traced in the top view (toe centre strap, toe V, over the instep)
-    for path in st["top"] + [st["over_top"]]:
+    for path in st["top"] + ([st["over_top"]] if st.get("over_top") else []):
         xy = _densify(path, 2.0)
         O = np.c_[xy[:, 0], prof.cy(xy[:, 0]) + xy[:, 1], np.full(len(xy), 220.0)]
         P, hit, _ = ray_hit(sc, O, np.tile([0, 0, -1.0], (len(O), 1)), 220.0, 0.2, upto)
@@ -118,8 +118,8 @@ def add_display_lateral(m, sc, prof, log=print):
             sc.add("smooth_union", StrapChain(P, N, st["width"], st["thickness"], "cable", round_r=0.5), 0.4)
 
     # ---- keeper bar on the lace-panel edge -----------------------------------
-    k = dp["keeper"]
-    P, N, ok = _side_points(sc, upto, prof, [k["center"]], side)
+    k = dp.get("keeper")
+    P, N, ok = _side_points(sc, upto, prof, [k["center"]], side) if k else (None, None, [False])
     if ok[0]:
         a, b = np.array(k["axis_from"], float), np.array(k["axis_to"], float)
         axis = np.array([b[0] - a[0], 0.0, b[1] - a[1]])

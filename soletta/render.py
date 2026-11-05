@@ -65,7 +65,7 @@ def dial_colors(V, frame, origin, kind, cap_top=19.6, cap_r=7.5):
 VIEWS = {
     # name: (camera direction from target, up vector, label)
     "left": ((0, 1, 0), (0, 0, 1), "Left Side (Dial Tension Side)"),
-    "right": ((0, -1, 0), (0, 0, 1), "Right Side (Strap Side)"),
+    "right": ((0, -1, 0), (0, 0, 1), "Right Side (Inner Side)"),
     "top": ((0, 0, 1), (0, -1, 0), "Top View"),
     "bottom": ((0, 0, -1), (0, 1, 0), "Bottom View"),
     "front": ((1, 0, 0), (0, 0, 1), "Front View"),
@@ -119,7 +119,7 @@ def render_all(parts, outdir, dial_info, log=print):
         pl.screenshot(path)
         out[name] = (path, label)
     # dial close-ups (one per side, front dial)
-    for key, label in (("L1", "Dial Tension Mechanism (Exterior Side)"), ("R1", "Dial Tension Mechanism (Side B)"),
+    for key, label in (("L1", "Dial Tension Mechanism (Exterior Side)"), ("R1", "Dial Tension Mechanism (Side B)"), ("L2", "Dial Tension Mechanism (Middle Dial)"),
                        ("S2", "Strap System (Interior Side)")):
         info = dial_info.get(key)
         if info is None:
@@ -188,7 +188,7 @@ def contact_sheet(views, path, title):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import matplotlib.image as mpimg
-    layout = [["left", "right"], ["top", "bottom"], ["front", "rear", "dial_L1", "dial_R1" if "dial_R1" in views else "dial_S2"]]
+    layout = [["left", "right"], ["top", "bottom"], ["front", "rear", "dial_L1", "dial_R1" if "dial_R1" in views else ("dial_S2" if "dial_S2" in views else "dial_L2")]]
     fig = plt.figure(figsize=(16, 13), dpi=110)
     fig.patch.set_facecolor("#f3f3f3")
     gs = fig.add_gridspec(3, 4, height_ratios=[1.0, 1.0, 0.9], hspace=0.12, wspace=0.04)

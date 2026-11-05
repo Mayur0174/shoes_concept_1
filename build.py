@@ -121,7 +121,10 @@ def main():
             P = np.asarray(P, float).reshape(-1, 3)
             return np.minimum(model.scene.points(P, upto), tongue_sc.points(P))
     model.drape_scene = _Drape()
-    lace_sc = build_laces(model, log)
+    CABLE = params.get("lacing", {}).get("system") == "cable_guides"
+    lace_sc = None if CABLE else build_laces(model, log)
+    LACE_LABEL = "lacing cable (display; use 1 mm line)" if CABLE else "laces"
+    LACE_FILE = "lacing_cable_display" if CABLE else "lace_assembly"
     strap_sc = None
     if model.straps:
         from soletta.straps import build_strap_display, strap_strip_lengths
@@ -144,7 +147,10 @@ def main():
     z_hi_out = float(prof.zmid_bottom(np.linspace(0, L, 300)).max()) + 2
     outsole = grid_mesh(outsole_sc, (-6, y_lo + 10, -2.0), (L + 6, y_hi - 10, z_hi_out),
                         res["outsole"], "outsole")
-    laces = grid_mesh(lace_sc, lace_sc.domain[0], lace_sc.domain[1], res["laces"], "laces")
+    if CABLE:
+        laces = None        # the line is fitted afterwards; only its guides are modelled
+    else:
+        laces = grid_mesh(lace_sc, lace_sc.domain[0], lace_sc.domain[1], res["laces"], "laces")
     tongue = grid_mesh(tongue_sc, tongue_sc.domain[0], tongue_sc.domain[1], res["laces"], "tongue")
     webbing = None
     if strap_sc is not None:
@@ -185,7 +191,8 @@ def main():
     ws = M.wall_thickness(model.scene, body, None, n=params["validation"]["wall_samples"])
     report["components"].append(M.validate("body", body, wall_stats=ws))
     report["components"].append(M.validate("outsole", outsole))
-    report["components"].append(M.validate("laces", laces))
+    if laces is not None:
+        report["components"].append(M.validate(LACE_LABEL, laces))
     report["components"].append(M.validate("tongue as fitted (separate part)", tongue))
     tongue_flat, tongue_len = flat_tongue_mesh(prof)
     report["components"].append(M.validate("tongue, flat print", tongue_flat))
@@ -201,7 +208,7 @@ def main():
     pv = params["printable"]
     body_p = printable_version(body, pv["body_faces"], "body")
     outsole_p = printable_version(outsole, pv["outsole_faces"], "outsole")
-    laces_p = printable_version(laces, pv["lace_faces"], "laces")
+    laces_p = printable_version(laces, pv["lace_faces"], "laces") if laces is not None else None
     # the outsole top is flush with the midsole bottom; overlap it 0.2 mm so
     # the union has no coplanar contact (which turns non-manifold in float32 STL)
     outsole_ov = outsole_p.copy()
@@ -219,13 +226,15 @@ def main():
     comp = os.path.join(out, "components")
     body.export(os.path.join(comp, "body_hires.stl"))
     outsole.export(os.path.join(comp, "outsole_hires.stl"))
-    laces.export(os.path.join(comp, "lace_assembly_hires.stl"))
+    if laces is not None:
+        laces.export(os.path.join(comp, f"{LACE_FILE}_hires.stl"))
     tongue.export(os.path.join(comp, "tongue_as_fitted.stl"))
     if webbing is not None:
         webbing.export(os.path.join(comp, "medial_straps_as_fitted_display.stl"))
     body_p.export(os.path.join(comp, "body.stl"))
     outsole_p.export(os.path.join(comp, "outsole.stl"))
-    laces_p.export(os.path.join(comp, "lace_assembly.stl"))
+    if laces_p is not None:
+        laces_p.export(os.path.join(comp, f"{LACE_FILE}.stl"))
     for k in ("housing", "spool", "knob"):
         local[k].export(os.path.join(comp, f"dial_{k}.stl"))
     for d, kind, tm in dial_meshes:
@@ -278,9 +287,9 @@ def main():
     tongue_flat.export(os.path.join(prn, "tongue_tpu_flat.stl"))
     export_3mf(merged, os.path.join(prn, "shoe_body_with_outsole.3mf"))
 
-    hi_parts = [body, outsole, laces, tongue] + ([webbing] if webbing is not None else []) + [tm for _, _, tm in dial_meshes] + buckle_meshes
+    hi_parts = [body, outsole, tongue] + ([laces] if laces is not None else []) + ([webbing] if webbing is not None else []) + [tm for _, _, tm in dial_meshes] + buckle_meshes
     trimesh.util.concatenate(hi_parts).export(os.path.join(out, "assembly", "soletta_assembly_hires.stl"))
-    pr_parts = [body_p, outsole_p, laces_p, tongue] + ([webbing] if webbing is not None else []) + [tm for _, _, tm in dial_meshes] + buckle_meshes
+    pr_parts = [body_p, outsole_p, tongue] + ([laces_p] if laces_p is not None else []) + ([webbing] if webbing is not None else []) + [tm for _, _, tm in dial_meshes] + buckle_meshes
     trimesh.util.concatenate(pr_parts).export(os.path.join(out, "assembly", "soletta_assembly.stl"))
 
     # colours
@@ -288,7 +297,7 @@ def main():
     lab = body_labels(model, np.asarray(body_p.vertices))
     body_C = RD.body_colors(np.asarray(body_p.vertices), lab)
     outsole_C = RD.solid_colors(len(outsole_p.vertices), "#1d1e20")
-    laces_C = RD.solid_colors(len(laces_p.vertices), "#ebe5d4")
+    laces_C = RD.solid_colors(len(laces_p.vertices), "#ebe5d4") if laces_p is not None else None
     dial_parts = []
     for d, kind, tm in dial_meshes:
         si = model.seat_info
@@ -297,7 +306,7 @@ def main():
         dial_parts.append((np.asarray(tm.vertices), np.asarray(tm.faces), C))
     color_parts = [(np.asarray(body_p.vertices), np.asarray(body_p.faces), body_C),
                    (np.asarray(outsole_p.vertices), np.asarray(outsole_p.faces), outsole_C),
-                   (np.asarray(laces_p.vertices), np.asarray(laces_p.faces), laces_C)] + dial_parts
+                   ] + ([(np.asarray(laces_p.vertices), np.asarray(laces_p.faces), laces_C)] if laces_p is not None else []) + dial_parts
     if webbing is not None:
         color_parts.append((np.asarray(webbing.vertices), np.asarray(webbing.faces),
                             RD.solid_colors(len(webbing.vertices), "#3d4044")))
@@ -316,7 +325,7 @@ def main():
     views = render(color_parts, dial_info)
     if views:
         RD.contact_sheet(views, "renders/contact_sheet.png",
-                         "Soletta trail shoe  |  dial side + strap side  |  %s quality" % quality)
+                         "Soletta trail shoe  |  3-dial cable lacing  |  %s quality" % quality)
         render_parts(outsole_p, outsole_C)
     mech_sheet(local["housing"], local["spool"], local["knob"], model.seat_info["port_z"] - 0.4)
 
@@ -331,6 +340,7 @@ def main():
         write_markdown(report, "reports/report.md")
 
     write_report()  # early copy so renders + report survive a STEP crash
+    params["_lace_file"] = LACE_FILE
     export_step(model, body_p, outsole_p, laces_p, kit, dials, params, out, buckle_shapes)
     write_report()
     package(out)
@@ -360,7 +370,9 @@ def export_step(model, body_p, outsole_p, laces_p, kit, dials, params, out, buck
     solids = {}
     for name, mesh, target in (("body", body_p, sp["body_faces"]),
                                ("outsole", outsole_p, sp["outsole_faces"]),
-                               ("lace_assembly", laces_p, sp["lace_faces"])):
+                               (params.get("_lace_file", "lace_assembly"), laces_p, sp["lace_faces"])):
+        if mesh is None:
+            continue
         dm = M.decimate(mesh, target)
         if dm is None or len(dm.faces) > 3 * target:
             WARN.append(f"STEP: {name} could not be reduced to ~{target} facets; skipped")
@@ -376,7 +388,8 @@ def export_step(model, body_p, outsole_p, laces_p, kit, dials, params, out, buck
     assy = cq.Assembly(name="soletta_shoe")
     for key, nm, col in (("body", "main_shoe_body", (0.45, 0.12, 0.16)),
                          ("outsole", "outsole", (0.11, 0.11, 0.12)),
-                         ("lace_assembly", "lace_assembly", (0.92, 0.9, 0.83))):
+                         (params.get("_lace_file", "lace_assembly"), params.get("_lace_file", "lace_assembly"),
+                          (0.1, 0.1, 0.11) if params.get("_lace_file") else (0.92, 0.9, 0.83))):
         if key in solids:
             assy.add(solids[key], name=nm, color=cq.Color(*col))
     for d in dials:
@@ -400,6 +413,12 @@ def function_checks(model, prof, buckle_meshes=(), tongue=None):
     lacing throat.  (The printable mesh is decimated to within ~0.05 mm.)"""
     sc = model.scene
     out = {}
+    if getattr(model, "lacing_zones", None):
+        for i, path in enumerate(model.bore_paths):
+            P = np.vstack([np.linspace(a, c, 6, endpoint=False) for a, c in zip(path[:-1], path[1:])])
+            out[f"lacing guide bore {i + 1} open, min clearance mm"] = round(float(sc.points(P).min()), 2)
+        for z in model.lacing_zones:
+            out[f"dial {z['dial']} line length incl. guides mm"] = round(z["length"], 0)
     for d, loop in zip(model.dials, model.bores):
         P = np.vstack([np.linspace(a, b, 6, endpoint=False) for a, b in zip(loop[:-1], loop[1:])])
         v = sc.points(P)

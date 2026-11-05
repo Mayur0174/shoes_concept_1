@@ -47,7 +47,7 @@
       96.0,
       202.0
     ],
-    "slot_width": 6.0,
+    "slot_width": 20.0,
     "tongue": {
       "gap": 1.0,
       "thickness": 2.2,
@@ -55,10 +55,14 @@
         84.0,
         208.0
       ],
-      "half_width": 17.0,
+      "half_width": 24.0,
       "z_max": 122.0,
       "glue_flap": 15.0,
-      "pad_thickness": 5.0
+      "pad_thickness": 5.0,
+      "center_strip": {
+        "width": 16.0,
+        "thickness": 1.4
+      }
     }
   },
   "heel": {
@@ -135,16 +139,16 @@
     "uturn_radius": 4.5,
     "targets_xz": [
       [
-        204.0,
-        70.0
+        185.0,
+        82.0
       ],
       [
-        150.0,
-        88.0
+        146.0,
+        92.0
       ],
       [
-        36.0,
-        96.0
+        112.0,
+        99.0
       ]
     ],
     "strap_width": 8.0,
@@ -179,7 +183,7 @@
     "wall_samples": 4000
   },
   "medial": {
-    "system": "straps",
+    "system": "none",
     "side": -1,
     "strap_x": [
       62.0,
@@ -199,5 +203,38 @@
     "fold_allowance": 50.0,
     "tail_length": 14.0,
     "panel_drop": 7.0
+  },
+  "lacing": {
+    "system": "cable_guides",
+    "guide_offset": 4.0,
+    "guide_tube_r": 2.6,
+    "bore_r": 1.1,
+    "cable_lift": 2.4,
+    "medial_arc_out": 6.0,
+    "lateral_guide_len": 10.0,
+    "cable_display_r": 0.6,
+    "zones": [
+      {
+        "dial": 0,
+        "x": [
+          196,
+          174
+        ]
+      },
+      {
+        "dial": 1,
+        "x": [
+          158,
+          134
+        ]
+      },
+      {
+        "dial": 2,
+        "x": [
+          122,
+          102
+        ]
+      }
+    ]
   }
 }

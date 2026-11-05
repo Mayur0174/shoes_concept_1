@@ -323,7 +323,7 @@ def build_body(prof, log=print):
     R = dp["diameter"] / 2
     m.dials = []
     straps_medial = p.get("medial", {}).get("system") == "straps"
-    dial_sides = (+1,) if straps_medial else (+1, -1)
+    dial_sides = (+1, -1) if dp.get("both_sides", False) else (+1,)
     for side in dial_sides:
         for i, (x, z) in enumerate(dp["positions_xz"]):
             x, z = x * sx, z * sz
@@ -363,6 +363,10 @@ def build_body(prof, log=print):
             from .straps import add_strap_hardware
             add_strap_hardware(m, sc, prof, sc.mark(), log)
         m.bores, m.bore_paths, m.cables = [], [], []
+        if p.get("lacing", {}).get("system") == "cable_guides":
+            from .lacing import add_cable_lacing
+            add_cable_lacing(m, sc, prof, log)
+            m.bore_paths = []            # display: solid guides, no bores
         m.mark_brackets = m.mark_cables = m.mark_guides = sc.mark()
     else:
         # ---- dial pods for the printed ratchet mechanism -------------------------
@@ -432,127 +436,144 @@ def build_body(prof, log=print):
         m.mark_brackets = sc.mark()
         log("body: dial pods and channel posts placed; routing cable channels")
 
-        # ---- cable channels ------------------------------------------------------
-        # Each dial pulls one loop of 1 mm braided line: housing port A -> channel
-        # -> U-turn guide at the target -> channel -> housing port B.
-        m.cables = []
-        m.bores = []
-        m.hardware = []
-        upto = m.mark_brackets
-        for d in m.dials:
-            fr, t_pt, side = d["frame"], d["seat"], d["side"]
-            T, TN = d["target"], unit(d["target_normal"])
-            strands = []
-            for P0 in d["mouths"]:
-                dist = np.hypot(T[0] - P0[0], T[2] - P0[2])
-                s_ = np.linspace(0.0, 1.0, max(6, int(dist / 2.0)))
-                xz = np.c_[P0[0] + (T[0] - P0[0]) * s_, P0[2] + (T[2] - P0[2]) * s_]
-                S, SN, ok = project_side(sc, upto, prof, xz, side)
-                lx, ly, _ = fr.local(S[:, 0], S[:, 1], S[:, 2])
-                keep = ok & (np.hypot(lx, ly) > mouth_r + 5.0)
-                keep &= np.linalg.norm(S - T, axis=1) > 7.0
-                S = S[keep]
-                if len(S) >= 3:
-                    Sm = S.copy()
-                    Sm[1:-1] = (S[:-2] + 2 * S[1:-1] + S[2:]) / 4.0
-                    S = project(sc, Sm, offset=lift, upto=upto, iters=3)
-                strands.append(np.vstack([P0, S]))
-            # U-turn at the target, in the surface tangent plane
-            approach = np.mean([T - st[-1] for st in strands], axis=0)
-            u = unit(approach - np.dot(approach, TN) * TN)
-            v = unit(np.cross(TN, u))
-            C = T + TN * lift
-            rho = cp["uturn_radius"]
-            if np.dot(strands[0][-1] - C, v) > np.dot(strands[1][-1] - C, v):
-                strands = strands[::-1]                   # strand 0 on the -v side
-            phi = np.linspace(0.0, np.pi, 13)
-            arc = C[None, :] + rho * (-np.cos(phi)[:, None] * v + np.sin(phi)[:, None] * u)
-            loop = np.vstack([strands[0], arc, strands[1][::-1]])
-            d["strands"] = [np.vstack([strands[0], arc[:7]]), np.vstack([strands[1], arc[::-1][:7]])]
-            d["loop"] = loop
-            ln = normals(sc, loop, upto)
-            sc.add("smooth_union", StrapChain(loop, ln, cp["strap_width"], cp["strap_thickness"], "cable"), 0.6)
-            m.cables.extend(d["strands"])
-            m.bores.append(loop)
-            # U-turn guide boss
-            gfr = Frame(T, TN, ex_hint=u)
-            sc.add("smooth_union", frame_feature(
-                gfr, lambda lx, ly, lz, rho=rho: box(lx - rho * 0.3, ly, lz - lift * 0.5,
-                                                     rho + 1.2, rho + 1.6, cp["strap_thickness"] / 2 + 0.8, 1.2),
-                rho + 10, "anchor"), 1.0)
-            m.hardware.append(("anchor", gfr))
-        # cosmetic webbing V across the toe box (reference top view)
-        for side in (+1, -1):
-            xa, xb = 186.0 * sx, 256.0 * sx
-            t_ = np.linspace(0.0, 1.0, 24)
-            xs_ = xa + (xb - xa) * t_
-            off = (prof.Wu(xs_) - 5.0) * (1 - t_) + 3.0 * t_
-            xy = np.c_[xs_, prof.cy(xs_) + side * off]
-            S, SN, ok = project_top(sc, upto, xy)
-            S, SN = S[ok], SN[ok]
-            if len(S) >= 4:
-                S = S + SN * (cp["strap_thickness"] / 2 - 0.4)
-                sc.add("smooth_union", StrapChain(S, SN, cp["strap_width"] * 0.85, cp["strap_thickness"] * 0.7,
-                                                  "cable"), 0.6)
-        m.mark_cables = sc.mark()
-        m.straps = []
-        if straps_medial:
-            from .straps import add_strap_hardware
-            add_strap_hardware(m, sc, prof, sc.mark(), log)
-
-        # mid-span guide sleeves (cosmetic clips over the channel)
-        for d in m.dials:
-            for pts in d["strands"]:
-                if len(pts) < 9:
-                    continue
-                i = int(len(pts) * 0.45)
-                c = pts[i]
-                tan = pts[i + 1] - pts[i - 1]
-                nn = normals(sc, (c - unit(normals(sc, c[None, :], m.mark_brackets)[0]) * lift)[None, :],
-                             m.mark_brackets)[0]
-                gfr = Frame(c, nn, ex_hint=tan)
+        if p.get("lacing", {}).get("system") == "cable_guides":
+            from .lacing import add_cable_lacing
+            ports = {}
+            for i, d in enumerate(m.dials):
+                fr = d["frame"]
+                ext = [fr.world(np.cos(pa) * (mouth_r - 3.0), np.sin(pa) * (mouth_r - 3.0), d["seat"] + si["port_z"])
+                       for pa in d["port_angles"]]
+                ports[i] = [d["mouths"][0], d["mouths"][1], ext[0], ext[1]]
+            add_cable_lacing(m, sc, prof, log, ports=ports)
+            m.straps = []
+            if straps_medial:
+                from .straps import add_strap_hardware
+                add_strap_hardware(m, sc, prof, sc.mark(), log)
+            m.mark_cables = m.mark_guides = sc.mark()
+        else:
+            # ---- cable channels ------------------------------------------------------
+            # Each dial pulls one loop of 1 mm braided line: housing port A -> channel
+            # -> U-turn guide at the target -> channel -> housing port B.
+            m.cables = []
+            m.bores = []
+            m.hardware = []
+            upto = m.mark_brackets
+            for d in m.dials:
+                fr, t_pt, side = d["frame"], d["seat"], d["side"]
+                T, TN = d["target"], unit(d["target_normal"])
+                strands = []
+                for P0 in d["mouths"]:
+                    dist = np.hypot(T[0] - P0[0], T[2] - P0[2])
+                    s_ = np.linspace(0.0, 1.0, max(6, int(dist / 2.0)))
+                    xz = np.c_[P0[0] + (T[0] - P0[0]) * s_, P0[2] + (T[2] - P0[2]) * s_]
+                    S, SN, ok = project_side(sc, upto, prof, xz, side)
+                    lx, ly, _ = fr.local(S[:, 0], S[:, 1], S[:, 2])
+                    keep = ok & (np.hypot(lx, ly) > mouth_r + 5.0)
+                    keep &= np.linalg.norm(S - T, axis=1) > 7.0
+                    S = S[keep]
+                    if len(S) >= 3:
+                        Sm = S.copy()
+                        Sm[1:-1] = (S[:-2] + 2 * S[1:-1] + S[2:]) / 4.0
+                        S = project(sc, Sm, offset=lift, upto=upto, iters=3)
+                    strands.append(np.vstack([P0, S]))
+                # U-turn at the target, in the surface tangent plane
+                approach = np.mean([T - st[-1] for st in strands], axis=0)
+                u = unit(approach - np.dot(approach, TN) * TN)
+                v = unit(np.cross(TN, u))
+                C = T + TN * lift
+                rho = cp["uturn_radius"]
+                if np.dot(strands[0][-1] - C, v) > np.dot(strands[1][-1] - C, v):
+                    strands = strands[::-1]                   # strand 0 on the -v side
+                phi = np.linspace(0.0, np.pi, 13)
+                arc = C[None, :] + rho * (-np.cos(phi)[:, None] * v + np.sin(phi)[:, None] * u)
+                loop = np.vstack([strands[0], arc, strands[1][::-1]])
+                d["strands"] = [np.vstack([strands[0], arc[:7]]), np.vstack([strands[1], arc[::-1][:7]])]
+                d["loop"] = loop
+                ln = normals(sc, loop, upto)
+                sc.add("smooth_union", StrapChain(loop, ln, cp["strap_width"], cp["strap_thickness"], "cable"), 0.6)
+                m.cables.extend(d["strands"])
+                m.bores.append(loop)
+                # U-turn guide boss
+                gfr = Frame(T, TN, ex_hint=u)
                 sc.add("smooth_union", frame_feature(
-                    gfr, lambda lx, ly, lz: box(lx, ly, lz, 2.6, cp["strap_width"] / 2 + 1.2, cp["strap_thickness"] / 2 + 0.7, 0.7), 8, "guide"), 0.5)
-                m.hardware.append(("guide", gfr))
-        # bore paths (opened last, after the eyelets, so nothing can block them)
-        m.bore_paths = []
-        for d, loop in zip(m.dials, m.bores):
-            fr = d["frame"]
-            ext = [fr.world(np.cos(pa) * (mouth_r - 3.0), np.sin(pa) * (mouth_r - 3.0), d["seat"] + si["port_z"])
-                   for pa in d["port_angles"]]
-            if np.linalg.norm(ext[0] - loop[0]) > np.linalg.norm(ext[1] - loop[0]):
-                ext = ext[::-1]
-            path = np.vstack([ext[0], loop, ext[1]])
-            m.bore_paths.append(path)
-        m.mark_guides = sc.mark()
+                    gfr, lambda lx, ly, lz, rho=rho: box(lx - rho * 0.3, ly, lz - lift * 0.5,
+                                                         rho + 1.2, rho + 1.6, cp["strap_thickness"] / 2 + 0.8, 1.2),
+                    rho + 10, "anchor"), 1.0)
+                m.hardware.append(("anchor", gfr))
+            # cosmetic webbing V across the toe box (reference top view)
+            for side in (+1, -1):
+                xa, xb = 186.0 * sx, 256.0 * sx
+                t_ = np.linspace(0.0, 1.0, 24)
+                xs_ = xa + (xb - xa) * t_
+                off = (prof.Wu(xs_) - 5.0) * (1 - t_) + 3.0 * t_
+                xy = np.c_[xs_, prof.cy(xs_) + side * off]
+                S, SN, ok = project_top(sc, upto, xy)
+                S, SN = S[ok], SN[ok]
+                if len(S) >= 4:
+                    S = S + SN * (cp["strap_thickness"] / 2 - 0.4)
+                    sc.add("smooth_union", StrapChain(S, SN, cp["strap_width"] * 0.85, cp["strap_thickness"] * 0.7,
+                                                      "cable"), 0.6)
+            m.mark_cables = sc.mark()
+            m.straps = []
+            if straps_medial:
+                from .straps import add_strap_hardware
+                add_strap_hardware(m, sc, prof, sc.mark(), log)
+
+            # mid-span guide sleeves (cosmetic clips over the channel)
+            for d in m.dials:
+                for pts in d["strands"]:
+                    if len(pts) < 9:
+                        continue
+                    i = int(len(pts) * 0.45)
+                    c = pts[i]
+                    tan = pts[i + 1] - pts[i - 1]
+                    nn = normals(sc, (c - unit(normals(sc, c[None, :], m.mark_brackets)[0]) * lift)[None, :],
+                                 m.mark_brackets)[0]
+                    gfr = Frame(c, nn, ex_hint=tan)
+                    sc.add("smooth_union", frame_feature(
+                        gfr, lambda lx, ly, lz: box(lx, ly, lz, 2.6, cp["strap_width"] / 2 + 1.2, cp["strap_thickness"] / 2 + 0.7, 0.7), 8, "guide"), 0.5)
+                    m.hardware.append(("guide", gfr))
+            # bore paths (opened last, after the eyelets, so nothing can block them)
+            m.bore_paths = []
+            for d, loop in zip(m.dials, m.bores):
+                fr = d["frame"]
+                ext = [fr.world(np.cos(pa) * (mouth_r - 3.0), np.sin(pa) * (mouth_r - 3.0), d["seat"] + si["port_z"])
+                       for pa in d["port_angles"]]
+                if np.linalg.norm(ext[0] - loop[0]) > np.linalg.norm(ext[1] - loop[0]):
+                    ext = ext[::-1]
+                path = np.vstack([ext[0], loop, ext[1]])
+                m.bore_paths.append(path)
+            m.mark_guides = sc.mark()
     log("body: cable channels, U-turn guides and bores added; placing eyelets")
 
-    # ---- eyelets -------------------------------------------------------------
-    lp = p["laces"]
-    xs_e = np.linspace(lp["eyelet_x_start"], lp["eyelet_x_end"], lp["eyelets_per_side"]) * sx
-    off = prof.phw(xs_e) - lp["eyelet_edge_inset"]
-    cy = prof.cy(xs_e)
     m.eyelets = {}
-    for side, key in ((+1, "L"), (-1, "R")):
-        xy = np.c_[xs_e, cy + side * off]
-        P, N, ok = project_top(sc, m.mark_guides, xy)
-        m.eyelets[key] = (P, N)
-    for key in ("L", "R"):
-        P, N = m.eyelets[key]
-        for c, nn in zip(P, N):
-            efr = Frame(c, nn)
-            sc.add("smooth_union", frame_feature(
-                efr, lambda lx, ly, lz: torus(lx, ly, lz - 0.4, lp["eyelet_ring_R"], lp["eyelet_ring_r"]),
-                10, "eyelet"), 0.5)
-    for key in ("L", "R"):
-        P, N = m.eyelets[key]
-        for c, nn in zip(P, N):
-            efr = Frame(c, nn)
-            sc.add("subtract", frame_feature(
-                efr, lambda lx, ly, lz: cylinder(lx, ly, lz, lp["eyelet_hole_r"], -5.0, 4.0, 0.0),
-                10, "eyelet_hole"))
+    if p.get("lacing", {}).get("system") != "cable_guides":
+        # ---- eyelets -------------------------------------------------------------
+        lp = p["laces"]
+        xs_e = np.linspace(lp["eyelet_x_start"], lp["eyelet_x_end"], lp["eyelets_per_side"]) * sx
+        off = prof.phw(xs_e) - lp["eyelet_edge_inset"]
+        cy = prof.cy(xs_e)
+        m.eyelets = {}
+        for side, key in ((+1, "L"), (-1, "R")):
+            xy = np.c_[xs_e, cy + side * off]
+            P, N, ok = project_top(sc, m.mark_guides, xy)
+            m.eyelets[key] = (P, N)
+        for key in ("L", "R"):
+            P, N = m.eyelets[key]
+            for c, nn in zip(P, N):
+                efr = Frame(c, nn)
+                sc.add("smooth_union", frame_feature(
+                    efr, lambda lx, ly, lz: torus(lx, ly, lz - 0.4, lp["eyelet_ring_R"], lp["eyelet_ring_r"]),
+                    10, "eyelet"), 0.5)
+        for key in ("L", "R"):
+            P, N = m.eyelets[key]
+            for c, nn in zip(P, N):
+                efr = Frame(c, nn)
+                sc.add("subtract", frame_feature(
+                    efr, lambda lx, ly, lz: cylinder(lx, ly, lz, lp["eyelet_hole_r"], -5.0, 4.0, 0.0),
+                    10, "eyelet_hole"))
     for path in m.bore_paths:
-        sc.add("subtract", CapsuleChain(path, r_bore, "bore"))
+        sc.add("subtract", CapsuleChain(path, getattr(m, "bore_r", None) or r_bore, "bore"))
     m.mark_final = sc.mark()
     log("body: program complete (%d ops)" % len(sc.ops))
     return m

@@ -51,6 +51,20 @@ def tongue_display_scene(m, prof):
     lo, hi = pad.bbox
     sc.add("subtract", Feature(clip, (lo - 4, hi + 4), "tongue_clip"))
     tg = prof.p["upper"]["tongue"]
+    strip = tg.get("center_strip")
+    if strip:
+        # webbing strip down the centre of the tongue (reference lacing)
+        from .sdf import StrapChain, ray_hit, normals
+        x0s = prof.p["upper"]["slot_x"][0] * prof.sx + 3
+        x1s = prof.p["upper"]["slot_x"][1] * prof.sx - 4
+        xs = np.linspace(x0s, x1s, 40)
+        O = np.c_[xs, prof.cy(xs), np.full_like(xs, 220.0)]
+        P, hit, _ = ray_hit(sc, O, np.tile([0, 0, -1.0], (len(O), 1)), 220.0, 0.2, sc.mark())
+        P = P[hit]
+        if len(P) > 4:
+            N = normals(sc, P, sc.mark())
+            P = P + N * (strip["thickness"] / 2 - 0.3)
+            sc.add("smooth_union", StrapChain(P, N, strip["width"], strip["thickness"], "tongue_strip", round_r=0.5), 0.4)
     x0 = tg["x"][0] * prof.sx - 25
     x1 = prof.p["upper"]["slot_x"][1] * prof.sx + tg["glue_flap"] + 5
     cy = float(prof.cy(0.5 * (x0 + x1)))
@@ -84,6 +98,11 @@ def flat_tongue_mesh(prof):
     band = m3d.Manifold.extrude(rounded(L, W, r), tg["thickness"])
     pad = m3d.Manifold.extrude(rounded(30.0, W - 4, r).translate((L - 31.0, 2.0)), tg["pad_thickness"])
     man = band + pad
+    strip = tg.get("center_strip")
+    if strip:
+        sw = strip["width"]
+        man = man + m3d.Manifold.extrude(rounded(L - 40.0, sw, 2.0).translate((6.0, (W - sw) / 2)),
+                                         tg["thickness"] + strip["thickness"])
     mm = man.to_mesh()
     t = trimesh.Trimesh(np.asarray(mm.vert_properties)[:, :3], np.asarray(mm.tri_verts), process=False)
     if t.volume < 0:
