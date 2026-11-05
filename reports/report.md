@@ -1,6 +1,6 @@
 # Soletta CAD build report (full quality)
 
-Elapsed: 511.8 s. Grid resolution (mm): {'body': 0.35, 'outsole': 0.25, 'laces': 0.22}
+Elapsed: 518.3 s. Grid resolution (mm): {'body': 0.35, 'outsole': 0.25, 'laces': 0.22}
 
 | Component | Triangles | Watertight | Winding OK | Bodies | Volume (cm3) | Extents (mm) | Overhang >45 deg |
 |---|---|---|---|---|---|---|---|

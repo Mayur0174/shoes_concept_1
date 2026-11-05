@@ -1,58 +1,58 @@
 [    0.0s] quality=full resolution={'body': 0.35, 'outsole': 0.25, 'laces': 0.22}
-[   22.1s] profiles + planform maps ready
-[   22.1s] body: base program ready, placing dials
-[   24.9s] body: dial pods and channel posts placed; routing cable channels
-[   25.4s] lacing: 3 cable zones, guides on both edges of the opening
-[   25.4s] body: cable channels, U-turn guides and bores added; placing eyelets
-[   28.5s] shape: photo-matched sidewall groove, padded collar and heel badge
-[   28.5s] body: program complete (108 ops)
-[   32.4s] dials: housing 2700, spool 1646, knob 2183 mm^3; checks {'spool_vs_knob_mm3': 0.0, 'engaged_rest_spool_vs_housing_mm3': 0.0, 'engaged_knob_vs_housing_mm3': 0.0, 'released_spin_max_interference_mm3': 0.0, 'engaged_turning_pawl_flex_overlap_mm3': 1.115, 'tooth_engagement_mm': 0.8, 'clicks_per_turn': 24, 'cable_per_turn_mm_each_end': 45.9, 'release_lift_mm': 3.2, 'stack_height_mm': 15.0}
-[   32.5s] body: evaluating SDF on 898x513x439 grid @ 0.35 mm
-[   34.4s]   body: slab 0/898
-[   53.4s]   body: slab 120/898
-[   73.2s]   body: slab 240/898
-[   93.8s]   body: slab 360/898
-[  114.8s]   body: slab 480/898
-[  134.9s]   body: slab 600/898
-[  154.0s]   body: slab 720/898
-[  172.4s]   body: slab 840/898
-[  179.5s] body: marching cubes
+[   12.4s] profiles + planform maps ready
+[   12.4s] body: base program ready, placing dials
+[   15.0s] body: dial pods and channel posts placed; routing cable channels
+[   15.7s] lacing: 3 cable zones, guides on both edges of the opening
+[   15.7s] body: cable channels, U-turn guides and bores added; placing eyelets
+[   19.7s] shape: photo-matched sidewall groove, padded collar and heel badge
+[   19.7s] body: program complete (108 ops)
+[   23.3s] dials: housing 2700, spool 1646, knob 2183 mm^3; checks {'spool_vs_knob_mm3': 0.0, 'engaged_rest_spool_vs_housing_mm3': 0.0, 'engaged_knob_vs_housing_mm3': 0.0, 'released_spin_max_interference_mm3': 0.0, 'engaged_turning_pawl_flex_overlap_mm3': 1.115, 'tooth_engagement_mm': 0.8, 'clicks_per_turn': 24, 'cable_per_turn_mm_each_end': 45.9, 'release_lift_mm': 3.2, 'stack_height_mm': 15.0}
+[   23.3s] body: evaluating SDF on 898x513x439 grid @ 0.35 mm
+[   25.5s]   body: slab 0/898
+[   47.0s]   body: slab 120/898
+[   69.0s]   body: slab 240/898
+[   91.1s]   body: slab 360/898
+[  113.3s]   body: slab 480/898
+[  135.1s]   body: slab 600/898
+[  156.1s]   body: slab 720/898
+[  176.8s]   body: slab 840/898
+[  184.8s] body: marching cubes
 /opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/trimesh/triangles.py:302: RuntimeWarning: invalid value encountered in divide
   center_mass = integrated[1:4] / volume
-[  196.1s] body: 4118602 triangles, watertight=True
-[  196.1s] outsole: evaluating SDF on 1213x637x136 grid @ 0.25 mm
-[  196.2s]   outsole: slab 0/1213
-[  197.5s]   outsole: slab 120/1213
-[  198.7s]   outsole: slab 240/1213
-[  199.9s]   outsole: slab 360/1213
-[  201.1s]   outsole: slab 480/1213
-[  202.3s]   outsole: slab 600/1213
-[  203.6s]   outsole: slab 720/1213
-[  204.8s]   outsole: slab 840/1213
-[  206.0s]   outsole: slab 960/1213
-[  207.2s]   outsole: slab 1080/1213
-[  208.5s]   outsole: slab 1200/1213
-[  208.5s] outsole: marching cubes
-[  219.9s] outsole: 3019990 triangles, watertight=True
-[  219.9s] tongue: evaluating SDF on 747x515x466 grid @ 0.22 mm
-[  220.2s]   tongue: slab 0/747
-[  251.7s]   tongue: slab 120/747
-[  291.8s]   tongue: slab 240/747
-[  328.2s]   tongue: slab 360/747
-[  332.6s]   tongue: slab 480/747
-[  336.9s]   tongue: slab 600/747
-[  340.7s]   tongue: slab 720/747
-[  341.1s] tongue: marching cubes
-[  345.8s] tongue: 1103960 triangles, watertight=True
-[  352.4s] insole logo debossed
-[  354.9s] validating meshes
-[  409.4s] exporting STL
-[  419.6s] colouring
-[  443.0s] rendered 9 views with pyvista
-[  447.4s] rendered 7 views with pyvista
-[  448.0s] STEP: building faceted solids for organic bodies
-[  459.0s] STEP: body faceted solid from 57696 facets in 5.7s
-[  478.4s] STEP: outsole faceted solid from 34254 facets in 3.6s
-[  511.8s] STEP: assembly written
-[  563.1s] release packages: contact_sheet.png, dial_mechanism_sections.png, report.md, soletta_STEP.zip, soletta_STL_components.zip, soletta_assembly.zip, soletta_printable.zip
-[  563.1s] done
+[  199.0s] body: 4118602 triangles, watertight=True
+[  199.0s] outsole: evaluating SDF on 1213x637x136 grid @ 0.25 mm
+[  199.0s]   outsole: slab 0/1213
+[  199.7s]   outsole: slab 120/1213
+[  200.4s]   outsole: slab 240/1213
+[  201.1s]   outsole: slab 360/1213
+[  201.7s]   outsole: slab 480/1213
+[  202.4s]   outsole: slab 600/1213
+[  203.1s]   outsole: slab 720/1213
+[  203.8s]   outsole: slab 840/1213
+[  204.5s]   outsole: slab 960/1213
+[  205.2s]   outsole: slab 1080/1213
+[  205.8s]   outsole: slab 1200/1213
+[  205.8s] outsole: marching cubes
+[  215.5s] outsole: 3019990 triangles, watertight=True
+[  215.5s] tongue: evaluating SDF on 747x515x466 grid @ 0.22 mm
+[  216.0s]   tongue: slab 0/747
+[  252.0s]   tongue: slab 120/747
+[  297.4s]   tongue: slab 240/747
+[  338.5s]   tongue: slab 360/747
+[  344.4s]   tongue: slab 480/747
+[  350.2s]   tongue: slab 600/747
+[  355.7s]   tongue: slab 720/747
+[  356.4s] tongue: marching cubes
+[  360.9s] tongue: 1103960 triangles, watertight=True
+[  367.4s] insole logo debossed
+[  370.1s] validating meshes
+[  421.6s] exporting STL
+[  432.1s] colouring
+[  448.9s] rendered 9 views with pyvista
+[  453.2s] rendered 7 views with pyvista
+[  453.9s] STEP: building faceted solids for organic bodies
+[  465.9s] STEP: body faceted solid from 57696 facets in 7.0s
+[  485.7s] STEP: outsole faceted solid from 34254 facets in 4.2s
+[  518.3s] STEP: assembly written
+[  568.7s] release packages: contact_sheet.png, dial_mechanism_sections.png, report.md, soletta_STEP.zip, soletta_STL_components.zip, soletta_assembly.zip, soletta_printable.zip
+[  568.7s] done
