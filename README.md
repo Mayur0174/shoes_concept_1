@@ -55,7 +55,7 @@ The printable shoe uses the photo-matched shape (`"shape": "photo"` in `params.j
 
 ### Shoe body
 
-Print it in **TPU 95A** so it flexes on the foot and the cable tension can pull the upper in. Use 0.2 mm layers, 3 walls and 10–15 % gyroid infill (about 420 g and 45–70 h at 15 %). The printed shoe is about 296 × 141 × 138 mm, so you need a bed of at least 300 mm.
+Print it in **TPU 95A** so it flexes on the foot and the cable tension can pull the upper in. Use 0.2 mm layers, 3 walls and 10–15 % gyroid infill (about 510 g and 55–85 h at 15 %). The printed shoe is about 296 × 141 × 138 mm, so you need a bed of at least 300 mm.
 
 **Supports.** The roof of the toe box (about 130 cm² inside the shoe) need tree supports. Remove the inner ones through the collar and the lacing throat, before you fit the tongue. TPU supports are tough to remove: set a 0.3 mm support Z gap, or use a PLA support interface on a dual-extrusion printer, which peels cleanly off TPU.
 
