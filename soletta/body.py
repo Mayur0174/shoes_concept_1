@@ -139,6 +139,12 @@ def well_field(prof, X, Y, Z):
     # never closer to the outside than the wall thickness (the upper narrows
     # toward its bottom edge, where an outline-only well would cut through)
     d2 = np.maximum(d2, upper_field(prof, X, Y, Z) + prof.twall(X))
+    hih = prof.T.get("HEEL_INNER_HALF")
+    if hih:
+        # snug heel cup: limit the inside half-width at the heel (sides only,
+        # so the inside length is unchanged)
+        xs_, ws_ = np.array(hih, float).T
+        d2 = smax(d2, np.abs(Y - prof.cy(X)) - np.interp(X, xs_ * prof.sx, ws_ * prof.sy), 4.0)
     d2 = smax(d2, X - x_throat, 8.0)
     return smax(d2, prof.ztop(X) - Z, 2.0)
 
@@ -409,6 +415,15 @@ def build_body(prof, log=print):
             d["target"] = T[0]
             d["target_normal"] = TN[0]
             lx, ly, _ = fr.local(*T[0])
+            lac = p.get("lacing", {})
+            if lac.get("system") == "cable_guides":
+                # aim the two cable ports at this dial's own lacing guides
+                zone = [zz for zz in lac["zones"] if zz["dial"] == d["index"]][0]
+                xm = 0.5 * (zone["x"][0] + zone["x"][1]) * sx
+                ym = float(prof.cy(xm)) + d["side"] * (p["upper"]["slot_width"] / 2 + lac["guide_offset"])
+                Q, _, okq = project_top(sc, m.mark_pods, [[xm, ym]])
+                if okq[0]:
+                    lx, ly, _ = fr.local(*Q[0])
             theta_t = np.arctan2(ly, lx)
             d["theta"] = theta_t
             d["port_angles"] = [theta_t + np.radians(a) * si["port_angle"] / 24.0 for a in (-24.0, 24.0)]

@@ -94,6 +94,16 @@ def add_cable_lacing(m, sc, prof, log=print, ports=None):
         gb = bend(Lb, Mb, run_b[min(2, len(run_b) - 1)])[::-1]
         gb = gb[::-1]
         for g in (ga, gb, U):
+            pw = lp.get("guide_pad_width", 0.0)
+            if pw > 0:
+                # moulded overlay pad under the guide: a finished look, and it
+                # spreads the line's pull into the upper
+                from .sdf import StrapChain
+                gs = np.vstack([g[0] - unit(g[1] - g[0]) * 3.0, g, g[-1] + unit(g[-1] - g[-2]) * 3.0])
+                gs = project(sc, gs, 0.0, upto, 5)
+                gn = normals(sc, gs, upto)
+                pt = lp.get("guide_pad_thickness", 1.4)
+                sc.add("smooth_union", StrapChain(gs + gn * (pt / 2 - 0.4), gn, pw, pt, "guide", round_r=0.6), 1.2)
             sc.add("smooth_union", CapsuleChain(g, r_t, "guide"), 0.8)
             m.bore_paths.append(np.vstack([g[0] - unit(g[1] - g[0]) * 2.0, g, g[-1] + unit(g[-1] - g[-2]) * 2.0]))
         if ports is not None:

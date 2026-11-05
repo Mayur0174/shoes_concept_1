@@ -73,15 +73,26 @@ def main():
             V, F = tessellate(place(bq, fr.o, fr.ez, fr.ex), 0.02, 0.15)
             bms.append(trimesh.Trimesh(V, F, process=True))
         parts["buckles"] = trimesh.util.concatenate(bms)
-    dd = make_display_dial(p["display_features"]["dial"])
+    # the real 15 mm dial (housing + spool + knob), aimed at its own guides,
+    # exactly as on the printable shoe
+    from soletta.mechanism import make_housing, make_spool, make_knob
+    kit = {k: f(p["dials"]) for k, f in (("housing", make_housing), ("spool", make_spool), ("knob", make_knob))}
     dms, exact = [], {}
+    zones = {z["dial"]: z for z in getattr(model, "lacing_zones", [])}
     for d in model.dials:
         fr = d["frame"]
         o = fr.world(0, 0, d["seat"])
-        shp = place(dd, o, fr.ez, fr.ex)
-        exact[f"dial_{d['name']}"] = shp
-        V, F = tessellate(shp, 0.02, 0.12)
-        dms.append(trimesh.Trimesh(V, F, process=True))
+        ex = fr.ex
+        z = zones.get(d["name"])
+        if z is not None:
+            lx, ly, _ = fr.local(*(0.5 * (z["La"] + z["Lb"])))
+            th = np.arctan2(ly, lx)
+            ex = np.cos(th) * fr.ex + np.sin(th) * fr.ey
+        for k, shp0 in kit.items():
+            shp = place(shp0, o, fr.ez, ex)
+            exact[f"dial_{d['name']}_{k}"] = shp
+            V, F = tessellate(shp, 0.02, 0.12)
+            dms.append(trimesh.Trimesh(V, F, process=True))
     parts["dials"] = trimesh.util.concatenate(dms)
     if model.straps:
         for i, st in enumerate(model.straps):

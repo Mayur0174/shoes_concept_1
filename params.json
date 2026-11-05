@@ -42,7 +42,7 @@
     "lace_panel_thickness": 2.6,
     "quarter_panel_thickness": 1.0,
     "throat_x": 100.0,
-    "inner_wall": 2.2,
+    "inner_wall": 2.6,
     "slot_x": [
       100.0,
       202.0
@@ -69,6 +69,12 @@
       "center_strip": {
         "width": 16.0,
         "thickness": 1.4
+      },
+      "keeper": {
+        "gap": 4.0,
+        "wall": 1.6,
+        "clear": 3.0,
+        "top": 1.2
       }
     }
   },
@@ -243,7 +249,9 @@
           106
         ]
       }
-    ]
+    ],
+    "guide_pad_width": 9.0,
+    "guide_pad_thickness": 1.4
   },
   "shape": "photo",
   "note": "Printable, working shoe in the photo-matched shape (profiles shared with params_display.json).",
@@ -631,11 +639,15 @@
       ],
       [
         221,
-        0.1
+        0.5
+      ],
+      [
+        223,
+        -2.0
       ],
       [
         300,
-        0.1
+        -2.0
       ]
     ],
     "TWALL_CTRL": [
@@ -758,6 +770,32 @@
       [
         300,
         6
+      ]
+    ],
+    "HEEL_INNER_HALF": [
+      [
+        -10,
+        33
+      ],
+      [
+        40,
+        35
+      ],
+      [
+        70,
+        38
+      ],
+      [
+        95,
+        48
+      ],
+      [
+        115,
+        90
+      ],
+      [
+        300,
+        90
       ]
     ]
   },

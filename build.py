@@ -195,7 +195,8 @@ def main():
     if laces is not None:
         report["components"].append(M.validate(LACE_LABEL, laces))
     report["components"].append(M.validate("tongue as fitted (separate part)", tongue))
-    tongue_flat, tongue_len = flat_tongue_mesh(prof)
+    from soletta.tongue import keeper_xs
+    tongue_flat, tongue_len = flat_tongue_mesh(prof, keeper_xs(model))
     report["components"].append(M.validate("tongue, flat print", tongue_flat))
     if webbing is not None:
         report["components"].append(M.validate("medial straps as fitted (display)", webbing))
@@ -500,7 +501,7 @@ def write_markdown(r, path):
         lines += ["", "## Body wall thickness (SDF ray sampling)", "",
                   "| samples | p01 | p05 | median | share < 2.5 mm |", "|---|---|---|---|---|",
                   f"| {wt['samples']} | {wt['p01']} | {wt['p05']} | {wt['median']} | {wt['frac_below_2_5mm']:.2%} |",
-                  "", "Thin samples are expected on the cable channel sheaths (4 mm tube, 1.6 mm bore), the inner tongue, guide clips and eyelet rims, "
+                  "", "Thin samples are expected on the lacing guide tubes (5.2 mm tube, 2.2 mm bore) and their pads, the collar roll edge and the dial pod rims, "
                   "which are features rather than walls."]
     fc = r.get("function_checks")
     if fc:
