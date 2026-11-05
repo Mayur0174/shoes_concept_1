@@ -142,7 +142,19 @@
         "hex_af": 10.0,
         "knot_pocket_at": 5.6,
         "knob_r": 13.0,
-        "cap_d": 15.0
+        "cap_d": 15.0,
+        "groove_top": 10.1,
+        "knob_t": 4.9,
+        "housing_top": 9.5,
+        "axle_top": 11.0,
+        "pawl_top": 4.4,
+        "teeth_z": [
+          1.6,
+          4.5
+        ],
+        "pawl_gap": 0.4,
+        "rim_t": 0.3,
+        "hex_h": 2.6
       },
       "max_seat_height": 7.0
     },
@@ -223,14 +235,14 @@
   "components": [
     {
       "name": "body",
-      "triangles": 3848662,
-      "vertices": 1924255,
+      "triangles": 3845644,
+      "vertices": 1922744,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 822604.2967247659,
-      "area_mm2": 186237.10346956662,
+      "volume_mm3": 822424.6285927901,
+      "area_mm2": 186092.02773947996,
       "bodies": 1,
-      "euler": -76,
+      "euler": -78,
       "bounds_mm": [
         [
           -5.08,
@@ -239,23 +251,23 @@
         ],
         [
           293.33,
-          68.35,
+          67.62,
           114.89
         ]
       ],
       "extents_mm": [
         298.41,
-        126.06,
+        125.33,
         106.89
       ],
-      "overhang_area_fraction_gt45": 0.17795870135308034,
+      "overhang_area_fraction_gt45": 0.17783313306106968,
       "wall_thickness": {
-        "samples": 3678,
-        "p01": 1.65,
+        "samples": 3691,
+        "p01": 1.45,
         "p05": 2.15,
-        "median": 5.45,
-        "frac_below_2_5mm": 0.2629,
-        "points_below_2_5mm": 967
+        "median": 5.35,
+        "frac_below_2_5mm": 0.2568,
+        "points_below_2_5mm": 948
       }
     },
     {
@@ -293,8 +305,8 @@
       "vertices": 330278,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 14947.308060304647,
-      "area_mm2": 10783.956389409625,
+      "volume_mm3": 14947.308060281399,
+      "area_mm2": 10783.956389458415,
       "bodies": 1,
       "euler": -28,
       "bounds_mm": [
@@ -314,7 +326,7 @@
         49.1,
         41.2
       ],
-      "overhang_area_fraction_gt45": 0.14555639230571313
+      "overhang_area_fraction_gt45": 0.14555639230505457
     },
     {
       "name": "tongue as fitted (separate part)",
@@ -380,7 +392,7 @@
       "vertices": 222903,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 6761.229846414843,
+      "volume_mm3": 6761.229846414841,
       "area_mm2": 8252.335494284787,
       "bodies": 3,
       "euler": -4,
@@ -401,7 +413,7 @@
         27.78,
         86.37
       ],
-      "overhang_area_fraction_gt45": 0.06157731604437095
+      "overhang_area_fraction_gt45": 0.061577316044370944
     },
     {
       "name": "dial housing (each)",
@@ -409,8 +421,8 @@
       "vertices": 4393,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 2964.683529229415,
-      "area_mm2": 3702.5749815647555,
+      "volume_mm3": 2696.9273317540114,
+      "area_mm2": 3384.8410744604234,
       "bodies": 1,
       "euler": -2,
       "bounds_mm": [
@@ -422,15 +434,15 @@
         [
           15.3,
           16.69,
-          13.39
+          10.99
         ]
       ],
       "extents_mm": [
         30.59,
         33.38,
-        13.39
+        10.99
       ],
-      "overhang_area_fraction_gt45": 0.0029502899302609447
+      "overhang_area_fraction_gt45": 0.0032272326658314204
     },
     {
       "name": "dial spool (each)",
@@ -438,8 +450,8 @@
       "vertices": 3278,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 1870.904641937638,
-      "area_mm2": 1898.272065815337,
+      "volume_mm3": 1644.40302842477,
+      "area_mm2": 1725.8667533841767,
       "bodies": 1,
       "euler": -2,
       "bounds_mm": [
@@ -451,15 +463,15 @@
         [
           11.24,
           10.4,
-          14.6
+          12.7
         ]
       ],
       "extents_mm": [
         21.64,
         21.56,
-        12.6
+        10.7
       ],
-      "overhang_area_fraction_gt45": 0.04316389277368956
+      "overhang_area_fraction_gt45": 0.04747574616839736
     },
     {
       "name": "dial knob (each)",
@@ -467,28 +479,28 @@
       "vertices": 7046,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 3734.1808373016715,
-      "area_mm2": 2049.8115271111783,
+      "volume_mm3": 2181.6840901686173,
+      "area_mm2": 1717.5190151277627,
       "bodies": 1,
       "euler": 2,
       "bounds_mm": [
         [
           -13.0,
           -13.0,
-          11.6
+          10.1
         ],
         [
           13.0,
           13.0,
-          19.6
+          15.0
         ]
       ],
       "extents_mm": [
         26.0,
         26.0,
-        8.0
+        4.9
       ],
-      "overhang_area_fraction_gt45": 0.05295049761896716
+      "overhang_area_fraction_gt45": 0.06319495704538557
     },
     {
       "name": "strap buckle (each)",
@@ -521,14 +533,14 @@
     },
     {
       "name": "printable shoe (body+outsole), reloaded STL",
-      "triangles": 847928,
-      "vertices": 423888,
+      "triangles": 847224,
+      "vertices": 423534,
       "watertight": true,
       "winding_consistent": true,
-      "volume_mm3": 932846.5682671767,
-      "area_mm2": 205221.57457061997,
+      "volume_mm3": 932667.8742183372,
+      "area_mm2": 205076.87189970943,
       "bodies": 1,
-      "euler": -76,
+      "euler": -78,
       "bounds_mm": [
         [
           -5.08,
@@ -537,20 +549,20 @@
         ],
         [
           293.32,
-          68.35,
+          67.62,
           114.89
         ]
       ],
       "extents_mm": [
         298.41,
-        126.06,
+        125.33,
         114.69
       ],
-      "overhang_area_fraction_gt45": 0.21030261332239056
+      "overhang_area_fraction_gt45": 0.21024234309702455
     }
   ],
   "warnings": [
-    "body: removed 2 floating fragment(s)",
+    "body: removed 1 floating fragment(s)",
     "outsole: removed 7 floating fragment(s)",
     "laces: removed 7 floating fragment(s)",
     "webbing: removed 3 floating fragment(s)"
@@ -560,20 +572,20 @@
     "engaged_rest_spool_vs_housing_mm3": 0.0,
     "engaged_knob_vs_housing_mm3": 0.0,
     "released_spin_max_interference_mm3": 0.0,
-    "engaged_turning_pawl_flex_overlap_mm3": 1.255,
+    "engaged_turning_pawl_flex_overlap_mm3": 1.115,
     "tooth_engagement_mm": 0.8,
     "clicks_per_turn": 24,
     "cable_per_turn_mm_each_end": 45.9,
     "release_lift_mm": 3.2,
-    "stack_height_mm": 19.6
+    "stack_height_mm": 15.0
   },
   "function_checks": {
     "channel L1 open, min clearance from centre line mm": 1.1,
-    "channel L1 length mm": 83.9,
+    "channel L1 length mm": 82.1,
     "channel L2 open, min clearance from centre line mm": 1.1,
-    "channel L2 length mm": 98.0,
+    "channel L2 length mm": 96.6,
     "channel L3 open, min clearance from centre line mm": 1.1,
-    "channel L3 length mm": 89.8,
+    "channel L3 length mm": 88.4,
     "throat slot open from footbed to top, min clearance mm": 1.44,
     "tongue (sliding part) vs shoe min clearance mm": 1.0,
     "tongue glue flap distance to vamp, max mm": 0.0,
@@ -595,7 +607,7 @@
     125.0,
     127.0
   ],
-  "elapsed_s": 402.0,
+  "elapsed_s": 441.8,
   "dial_frames": [
     {
       "name": "L1",
